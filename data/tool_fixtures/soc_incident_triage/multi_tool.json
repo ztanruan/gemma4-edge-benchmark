@@ -1,0 +1,34 @@
+[
+  {
+    "name": "get_host_findings",
+    "response": {
+      "host": "finance-laptop-227",
+      "parent_process": "winword.exe",
+      "network_hits": 3,
+      "token_refresh": "anomalous"
+    }
+  },
+  {
+    "name": "isolate_host",
+    "response": {
+      "host": "finance-laptop-227",
+      "status": "isolated",
+      "timestamp": "2026-04-16T09:18:00Z"
+    }
+  },
+  {
+    "name": "create_incident_ticket",
+    "response": {
+      "ticket_id": "IR-1182",
+      "severity": "high",
+      "queue": "soc-investigation"
+    }
+  },
+  {
+    "name": "get_incident_commander",
+    "response": {
+      "name": "Omar Patel",
+      "channel": "IR-WARROOM"
+    }
+  }
+]

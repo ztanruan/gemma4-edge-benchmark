@@ -1,0 +1,25 @@
+[
+  {
+    "name": "lookup_inventory",
+    "response": {
+      "sku": "SKU-A19-CASE",
+      "available_units": 84,
+      "location": "reserve rack R-14-03"
+    }
+  },
+  {
+    "name": "create_replenishment_task",
+    "response": {
+      "task_id": "REP-5510",
+      "priority": "high",
+      "destination": "B-17"
+    }
+  },
+  {
+    "name": "get_shift_lead",
+    "response": {
+      "name": "Tasha Reed",
+      "radio_channel": "WH-1"
+    }
+  }
+]

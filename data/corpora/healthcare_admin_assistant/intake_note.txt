@@ -1,0 +1,3 @@
+INTAKE issue="payer requires either six weeks of conservative therapy or documented red-flag symptoms"
+INTAKE next_check="verify the patient plan and imaging benefit requirements"
+INTAKE caution="default to scheduling a contrast MRI when the policy only supports standard lumbar MRI"

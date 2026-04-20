@@ -1,0 +1,33 @@
+[
+  {
+    "name": "get_service_history",
+    "response": {
+      "site_id": "MCS-D4",
+      "last_visit": "2026-03-11",
+      "note": "site profile drift fixed after controller replacement"
+    }
+  },
+  {
+    "name": "lookup_part_eta",
+    "response": {
+      "part_number": "CBL-RS485-3M",
+      "status": "available in van stock",
+      "eta_hours": 0
+    }
+  },
+  {
+    "name": "create_visit_brief",
+    "response": {
+      "brief_id": "FS-2918",
+      "priority": "medium",
+      "owner": "dispatch-west"
+    }
+  },
+  {
+    "name": "get_regional_service_lead",
+    "response": {
+      "name": "Marco Diaz",
+      "phone": "555-0144"
+    }
+  }
+]

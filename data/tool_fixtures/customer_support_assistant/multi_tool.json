@@ -1,0 +1,37 @@
+[
+  {
+    "name": "get_account_entitlements",
+    "response": {
+      "account_id": "AC-7781",
+      "tier": "enterprise",
+      "features": [
+        "sso",
+        "scim",
+        "domain-alias"
+      ]
+    }
+  },
+  {
+    "name": "lookup_provisioning_status",
+    "response": {
+      "account_id": "AC-7781",
+      "domain_verification": "pending recheck",
+      "scim_secret_last_rotated": "2026-04-07"
+    }
+  },
+  {
+    "name": "create_support_escalation",
+    "response": {
+      "case_id": "SUP-9042",
+      "queue": "identity-escalations",
+      "priority": "high"
+    }
+  },
+  {
+    "name": "get_queue_owner",
+    "response": {
+      "role": "identity escalation manager",
+      "name": "Dana Wu"
+    }
+  }
+]

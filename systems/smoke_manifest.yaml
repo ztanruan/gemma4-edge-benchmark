@@ -1,0 +1,114 @@
+suite_name: gemma_vllm_systems_smoke
+suite_description: >
+  Minimal systems smoke experiments for Jetson Thor running Gemma 4 26B-A4B
+  through vLLM chat serving. This suite is intended to validate request flow,
+  metrics capture, telemetry wiring, and artifact generation before a full
+  systems benchmark.
+experiments:
+  - id: thermal_soak_smoke
+    kind: thermal_soak
+    title: Thermal Soak Smoke
+    description: >
+      Short sustained-load smoke test to verify repeated request execution,
+      throughput capture, and optional tegrastats collection.
+    params:
+      duration_sec: 20
+      request_gap_sec: 0
+      target_prompt_tokens: 1024
+      max_tokens: 96
+      thinking_enabled: false
+      tegrastats_interval_ms: 1000
+  - id: concurrency_scaling_smoke
+    kind: concurrency_scaling
+    title: Concurrency Scaling Smoke
+    description: >
+      Minimal concurrent batch to validate batch summaries, per-request records,
+      and throughput aggregation.
+    params:
+      concurrency_levels: [2]
+      rounds_per_level: 1
+      target_prompt_tokens: 1024
+      max_tokens: 96
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: io_length_sweep_smoke
+    kind: io_length_sweep
+    title: IO Length Sweep Smoke
+    description: >
+      Single small case to validate prompt tokenization, latency capture, and
+      record generation for the IO sweep experiment path.
+    params:
+      repeats: 1
+      tegrastats_interval_ms: 500
+      cases:
+        - id: smoke_short_in_short_out
+          target_prompt_tokens: 512
+          max_tokens: 64
+          thinking_enabled: false
+          question: Answer with one short diagnosis and one next action.
+  - id: itl_distribution_smoke
+    kind: itl_distribution
+    title: ITL Distribution Smoke
+    description: >
+      Single streamed request to validate event timelines, inter-token latency
+      statistics, and stall detection fields.
+    params:
+      repeats: 1
+      target_prompt_tokens: 1024
+      max_tokens: 128
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: energy_efficiency_smoke
+    kind: energy_efficiency
+    title: Energy Efficiency Smoke
+    description: >
+      Single short workload to validate joules-per-request and
+      joules-per-output-token calculation.
+    params:
+      repeats: 1
+      tegrastats_interval_ms: 200
+      cases:
+        - id: smoke_energy_case
+          target_prompt_tokens: 1024
+          max_tokens: 96
+          thinking_enabled: false
+          question: Return a concise diagnosis and one next action.
+  - id: kv_cache_saturation_smoke
+    kind: kv_cache_saturation
+    title: KV Cache Saturation Smoke
+    description: >
+      Small overlapping long-context batch to validate queue time, KV cache, and
+      batch metrics under light memory pressure.
+    params:
+      concurrency_levels: [2]
+      rounds_per_level: 1
+      target_prompt_tokens: 4096
+      max_tokens: 128
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: cold_start_smoke
+    kind: cold_start
+    title: Cold Start Smoke
+    description: >
+      Startup and short idle recovery check to validate phase labeling and idle
+      latency capture.
+    params:
+      target_prompt_tokens: 1024
+      max_tokens: 96
+      thinking_enabled: false
+      idle_windows_sec: [2]
+      tegrastats_interval_ms: 500
+  - id: prefix_caching_smoke
+    kind: prefix_caching
+    title: Prefix Reuse Smoke
+    description: >
+      Two requests with a shared long prefix to validate prefix-reuse request
+      recording and timing comparison.
+    params:
+      target_prompt_tokens: 4096
+      max_tokens: 96
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+      questions:
+        - What is the single most likely root cause described in the dossier?
+        - Which two next actions are lowest risk based on the dossier?

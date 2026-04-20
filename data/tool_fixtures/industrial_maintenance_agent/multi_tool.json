@@ -1,0 +1,34 @@
+[
+  {
+    "name": "get_alarm_snapshot",
+    "response": {
+      "asset_id": "PX-22",
+      "alarm_code": "44",
+      "current_peak_pct": 118,
+      "cycle_state": "startup"
+    }
+  },
+  {
+    "name": "check_spare_availability",
+    "response": {
+      "part_number": "WH-22-HARNESS",
+      "availability": "1 reserved",
+      "location": "parts crib C07"
+    }
+  },
+  {
+    "name": "open_work_order",
+    "response": {
+      "work_order_id": "WO-7714",
+      "priority": "urgent",
+      "owner_group": "automation-maintenance"
+    }
+  },
+  {
+    "name": "get_owner_contact",
+    "response": {
+      "role": "automation maintenance lead",
+      "name": "Rina Solis"
+    }
+  }
+]

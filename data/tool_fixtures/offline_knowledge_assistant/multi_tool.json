@@ -1,0 +1,26 @@
+[
+  {
+    "name": "lookup_local_part_stock",
+    "response": {
+      "item_code": "STR-KIT-447",
+      "availability": "2 kits available",
+      "location": "maintenance cage B14"
+    }
+  },
+  {
+    "name": "create_local_maintenance_ticket",
+    "response": {
+      "ticket_id": "NR-4821",
+      "priority": "high",
+      "assigned_group": "rotating-equipment"
+    }
+  },
+  {
+    "name": "get_on_shift_technician",
+    "response": {
+      "role": "rotating equipment technician",
+      "name": "Elena Park",
+      "radio_channel": "Ops-3"
+    }
+  }
+]

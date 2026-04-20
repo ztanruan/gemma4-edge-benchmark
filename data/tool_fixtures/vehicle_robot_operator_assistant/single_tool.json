@@ -1,0 +1,6 @@
+{
+  "vehicle_id": "YBT7-03",
+  "fault_code": "E214",
+  "left_encoder_delta_deg": 4.8,
+  "autonomy_status": "disabled"
+}

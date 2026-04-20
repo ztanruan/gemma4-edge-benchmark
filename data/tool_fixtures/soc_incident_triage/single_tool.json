@@ -1,0 +1,6 @@
+{
+  "host": "finance-laptop-227",
+  "parent_process": "winword.exe",
+  "network_hits": 3,
+  "token_refresh": "anomalous"
+}

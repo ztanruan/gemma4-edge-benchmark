@@ -1,0 +1,35 @@
+gemma_standard:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_structured:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_agentic:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_long_context:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_image_classification:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_clock_time_reading:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096
+gemma_image_text_extraction:
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2096

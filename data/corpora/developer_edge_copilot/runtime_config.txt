@@ -1,0 +1,4 @@
+service=bridge-sync
+issue="MQTT messages stop forwarding after token refresh in release 2.7.1"
+first_check="compare the runtime value of mqtt_session_ttl with the documented baseline"
+do_not="delete the local spool queue before exporting backlog metadata"

@@ -1,0 +1,5 @@
+{
+  "patient_id": "PT-4102",
+  "plan": "commercial PPO",
+  "lumbar_mri_benefit": "requires prior auth"
+}

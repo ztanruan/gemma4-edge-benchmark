@@ -1,0 +1,11 @@
+Patient Name: Maya Thompson
+Patient Alias: Patient A
+MRN: 8834102
+DOB: 1984-09-17
+Address: 44 Grove Street, Albany, NY
+Phone: 555-0188
+Ordering Provider: Dr. Imani Clark
+Payer: NorthLake PPO
+Study: lumbar MRI
+Issue: prior authorization missing payer confirmation
+Internal Referral Owner: Jordan Hale

@@ -1,0 +1,3 @@
+IDP suspicious_refresh user=fin-analyst
+IDP recommended_followup="pull recent identity-provider token refresh events for the affected user"
+IDP incident_commander="Omar Patel"

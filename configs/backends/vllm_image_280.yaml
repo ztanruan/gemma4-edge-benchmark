@@ -1,0 +1,24 @@
+name: vllm
+base_url: http://127.0.0.1:8000
+api_key: null
+model: bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4
+max_context_tokens: 65536
+max_soft_tokens: 280
+supported_modalities:
+- text
+- image
+audio_supported: false
+container_image: ghcr.io/nvidia-ai-iot/vllm@sha256:08ec0a116a09e50b74e26eca91f52bfe2c95977f0eb4cb3e079cfb4b3c3932c6
+container_image_tag: b7805-r38.3-arm64-sbsa-cu130-24.04
+container_image_digest: sha256:08ec0a116a09e50b74e26eca91f52bfe2c95977f0eb4cb3e079cfb4b3c3932c6
+container_image_source: https://github.com/orgs/NVIDIA-AI-IOT/packages/container/package/vllm
+benchmark_profile: image
+vision_budget_label: image_280
+prefix_caching_enabled: false
+launch_command: 'vllm serve bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4 --max-model-len
+  65536 --gpu-memory-utilization 0.8 --generation-config vllm --reasoning-parser gemma4
+  --enable-auto-tool-choice --tool-call-parser gemma4 --chat-template examples/tool_chat_template_gemma4.jinja
+  --mm-processor-kwargs ''{"max_soft_tokens": 280}'' --limit-mm-per-prompt image=1
+  --allowed-local-media-path "$PWD" --no-enable-prefix-caching'
+notes: Image benchmark variant pinned to max_soft_tokens=280. Run the same image families
+  with each image budget to compare accuracy/latency/power tradeoffs.

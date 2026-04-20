@@ -1,0 +1,3 @@
+PO_NUMBER=PO-45811
+REQUEST_TYPE=invoice intake document
+ESCALATE_WHEN=the document lacks tax jurisdiction or exceeds the tolerance after line-level reconciliation

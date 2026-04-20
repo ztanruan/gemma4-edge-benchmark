@@ -1,0 +1,163 @@
+suite_name: gemma_vllm_systems_benchmark
+suite_description: >
+  Controlled systems-performance experiments for Jetson Thor running
+  Gemma 4 26B-A4B through vLLM chat serving. These tests are separate from
+  the workload benchmark and focus on thermal behavior, concurrency,
+  latency decomposition, energy, cache pressure, and prefix reuse.
+experiments:
+  - id: thermal_soak
+    kind: thermal_soak
+    title: Thermal Soak / Sustained Load
+    description: >
+      Repeats a fixed medium-long workload continuously to characterize
+      steady-state throughput, temperature rise, and power under sustained load.
+    params:
+      duration_sec: 1800
+      request_gap_sec: 0
+      target_prompt_tokens: 4096
+      max_tokens: 256
+      thinking_enabled: false
+      tegrastats_interval_ms: 1000
+  - id: concurrency_scaling
+    kind: concurrency_scaling
+    title: Concurrency / Throughput Scaling
+    description: >
+      Measures how total throughput and per-request latency behave as the
+      number of simultaneous requests increases.
+    params:
+      concurrency_levels: [1, 2, 4, 8, 16]
+      rounds_per_level: 4
+      target_prompt_tokens: 2048
+      max_tokens: 192
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: io_length_sweep
+    kind: io_length_sweep
+    title: Input / Output Length Sweep
+    description: >
+      Sweeps across short and long prompts with short and long outputs to
+      characterize prefill-heavy and decode-heavy workloads.
+    params:
+      repeats: 3
+      tegrastats_interval_ms: 500
+      cases:
+        - id: short_in_short_out
+          target_prompt_tokens: 256
+          max_tokens: 64
+          thinking_enabled: false
+          question: Answer with one short diagnosis and one next action.
+        - id: short_in_long_out
+          target_prompt_tokens: 256
+          max_tokens: 512
+          thinking_enabled: false
+          question: Produce a detailed summary with explicit supporting evidence.
+        - id: long16k_in_short_out
+          target_prompt_tokens: 16000
+          max_tokens: 64
+          thinking_enabled: false
+          question: Give the most likely root cause in two sentences.
+        - id: long32k_in_short_out
+          target_prompt_tokens: 32000
+          max_tokens: 64
+          thinking_enabled: false
+          question: Give the most likely root cause in two sentences.
+        - id: long48k_in_short_out
+          target_prompt_tokens: 48000
+          max_tokens: 64
+          thinking_enabled: false
+          question: Give the most likely root cause in two sentences.
+        - id: long16k_in_long_out
+          target_prompt_tokens: 16000
+          max_tokens: 512
+          thinking_enabled: false
+          question: Produce a detailed summary with supporting evidence and next actions.
+        - id: long32k_in_long_out
+          target_prompt_tokens: 32000
+          max_tokens: 512
+          thinking_enabled: false
+          question: Produce a detailed summary with supporting evidence and next actions.
+  - id: itl_distribution
+    kind: itl_distribution
+    title: Inter-Token Latency Distribution
+    description: >
+      Collects per-event timing to characterize the smoothness of streamed output
+      and detect decode stalls.
+    params:
+      repeats: 8
+      target_prompt_tokens: 2048
+      max_tokens: 512
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: energy_efficiency
+    kind: energy_efficiency
+    title: Energy Efficiency
+    description: >
+      Measures joules per request and joules per output token across representative
+      short, medium, and long workloads.
+    params:
+      repeats: 3
+      tegrastats_interval_ms: 200
+      cases:
+        - id: energy_short_chat
+          target_prompt_tokens: 256
+          max_tokens: 128
+          thinking_enabled: false
+          question: Return a concise diagnosis and one next action.
+        - id: energy_medium_grounded
+          target_prompt_tokens: 4096
+          max_tokens: 256
+          thinking_enabled: false
+          question: Summarize the dossier and recommend the safest next step.
+        - id: energy_long_rag
+          target_prompt_tokens: 32000
+          max_tokens: 256
+          thinking_enabled: false
+          question: Synthesize the dossier into a concise root cause and action plan.
+  - id: kv_cache_saturation
+    kind: kv_cache_saturation
+    title: KV Cache Saturation
+    description: >
+      Applies overlapping long-context requests to observe queue time, TTFT, and
+      KV-cache usage under memory pressure.
+    params:
+      concurrency_levels: [1, 2, 4]
+      rounds_per_level: 2
+      target_prompt_tokens: 32000
+      max_tokens: 384
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+  - id: cold_start
+    kind: cold_start
+    title: Cold Start / Idle Recovery
+    description: >
+      Measures first-request latency immediately after attach and again after
+      configured idle windows. Run this experiment first after server launch for
+      the cleanest comparison.
+    params:
+      target_prompt_tokens: 2048
+      max_tokens: 128
+      thinking_enabled: false
+      idle_windows_sec: [60, 300]
+      tegrastats_interval_ms: 500
+  - id: prefix_caching
+    kind: prefix_caching
+    title: Prefix Reuse / Prompt Caching
+    description: >
+      Reuses a long shared prefix across multiple user questions to measure
+      whether TTFT and prefill time improve after the first request.
+    params:
+      target_prompt_tokens: 16000
+      max_tokens: 128
+      thinking_enabled: false
+      tegrastats_interval_ms: 500
+      questions:
+        - What is the single most likely root cause described in the dossier?
+        - Which two next actions are lowest risk based on the dossier?
+        - What evidence in the dossier most strongly supports the diagnosis?
+        - Which signals suggest the issue is prefill-heavy rather than decode-heavy?
+        - What data would you ask for next if one more local check were allowed?
+        - Which warning or constraint in the dossier matters most operationally?
+        - What would be the shortest safe handoff summary for another operator?
+        - Which section of the dossier is most likely to be stale or least reliable?
+        - What should be avoided while the system is still unstable?
+        - What one-line recommendation would you send to a supervisor?

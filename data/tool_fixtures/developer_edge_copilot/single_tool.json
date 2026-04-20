@@ -1,0 +1,6 @@
+{
+  "service": "bridge-sync",
+  "mqtt_session_ttl": 45,
+  "recommended_baseline": 120,
+  "last_error": "token refresh succeeded but client session not renewed"
+}

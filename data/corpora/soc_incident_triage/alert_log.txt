@@ -1,0 +1,4 @@
+ALERT host=finance-laptop-227 detection="an encoded PowerShell launch followed by suspicious token refresh activity"
+ALERT note="Start with confirm the parent process chain for the encoded PowerShell execution"
+ALERT note="Then pull recent identity-provider token refresh events for the affected user"
+ALERT escalation="identity misuse indicators remain after the host is isolated and token events confirm suspicious access"

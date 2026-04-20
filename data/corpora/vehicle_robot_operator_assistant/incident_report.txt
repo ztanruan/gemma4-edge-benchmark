@@ -1,0 +1,3 @@
+REPORT vehicle=YBT7-03 fault="E214 steering encoder disagreement after a curb strike"
+REPORT first_safe_action="stop autonomous mode before any further movement"
+REPORT escalation="the encoder mismatch persists after harness inspection and calibration"

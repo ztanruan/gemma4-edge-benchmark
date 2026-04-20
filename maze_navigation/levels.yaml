@@ -1,0 +1,70 @@
+levels:
+  - id: easy_corridor_escape
+    difficulty: easy
+    title: Easy Corridor Escape
+    description: Single-layer corridor with one clean shortest route and a small side branch.
+    start_heading: east
+    recommended_max_calls: 20
+    layers:
+      - name: z0
+        rows:
+          - "#########"
+          - "#S....E.#"
+          - "#.#####.#"
+          - "#.......#"
+          - "#########"
+  - id: medium_vertical_hop
+    difficulty: medium
+    title: Medium Vertical Hop
+    description: Two-layer maze that requires one ascent onto an upper layer to reach the exit with minimal actions.
+    start_heading: east
+    recommended_max_calls: 50
+    required_optimal_actions:
+      - ascend
+    layers:
+      - name: z0
+        rows:
+          - "#########"
+          - "#S....#.#"
+          - "#####.#.#"
+          - "#.....#.#"
+          - "#.#####.#"
+          - "#..U....#"
+          - "#########"
+      - name: z1
+        rows:
+          - "#########"
+          - "#.#####.#"
+          - "#.#...#.#"
+          - "#.#.#.#.#"
+          - "#...#...#"
+          - "###DE.###"
+          - "#########"
+  - id: hard_up_across_down
+    difficulty: hard
+    title: Hard Up Across Down
+    description: Two-layer maze that requires ascending from the lower layer, navigating across the upper layer, then descending back to the lower layer to escape optimally.
+    start_heading: east
+    recommended_max_calls: 70
+    required_optimal_actions:
+      - ascend
+      - descend
+    layers:
+      - name: z0
+        rows:
+          - "###########"
+          - "#S....#####"
+          - "#####.#####"
+          - "#.....#####"
+          - "#.#########"
+          - "#..U###DE##"
+          - "###########"
+      - name: z1
+        rows:
+          - "###########"
+          - "###########"
+          - "###########"
+          - "###########"
+          - "###########"
+          - "#..B...D###"
+          - "###########"

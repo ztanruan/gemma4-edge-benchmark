@@ -1,0 +1,6 @@
+INVOICE_ID=INV-2026-0041
+VENDOR_ID=V-1108
+PO_NUMBER=PO-45811
+ISSUE=invoice total mismatches the purchase order beyond the 1.5 percent tolerance
+REQUIRED_FIRST_CHECK=validate the vendor against the approved vendor master
+DO_NOT=auto-post the invoice when the total exceeds the documented tolerance threshold

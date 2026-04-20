@@ -1,0 +1,33 @@
+[
+  {
+    "name": "validate_vendor",
+    "response": {
+      "vendor_id": "V-1108",
+      "status": "approved",
+      "payment_terms": "net 45"
+    }
+  },
+  {
+    "name": "submit_extracted_fields",
+    "response": {
+      "submission_id": "SUB-4401",
+      "status": "accepted",
+      "tolerance_check": "failed"
+    }
+  },
+  {
+    "name": "route_exception_review",
+    "response": {
+      "case_id": "AP-6104",
+      "queue": "ap-exceptions",
+      "priority": "medium"
+    }
+  },
+  {
+    "name": "get_ap_owner",
+    "response": {
+      "name": "Mila Chen",
+      "extension": "3114"
+    }
+  }
+]

@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+
+# Generated datasets and staged image corpora are kept local for reproducibility.
+data/source_datasets/
+data/image_corpora/
+docs/scenarios/
+
+# Raw benchmark artifacts stay local; publish sanitized summaries instead.
+outputs/
+
+# Optional local telemetry and scratch files.
+*.log
+*.tmp

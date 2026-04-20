@@ -1,0 +1,33 @@
+[
+  {
+    "name": "lookup_patient_eligibility",
+    "response": {
+      "patient_id": "PT-4102",
+      "plan": "commercial PPO",
+      "lumbar_mri_benefit": "requires prior auth"
+    }
+  },
+  {
+    "name": "create_prior_auth_packet",
+    "response": {
+      "packet_id": "PA-8831",
+      "status": "drafted",
+      "missing_item": "PT notes week 5-6"
+    }
+  },
+  {
+    "name": "schedule_followup",
+    "response": {
+      "appointment_id": "SCH-2214",
+      "slot": "2026-04-18 14:20",
+      "owner": "referral-desk"
+    }
+  },
+  {
+    "name": "get_referral_owner",
+    "response": {
+      "name": "Priya Nair",
+      "extension": "4217"
+    }
+  }
+]
