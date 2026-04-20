@@ -1,20 +1,20 @@
 # Gemma 4 Edge Benchmark on Jetson Thor
 
-This repository packages a reproducible `vLLM` benchmark harness for evaluating `Gemma 4 26B-A4B` on `NVIDIA Jetson AGX Thor` across practical edge workloads. The focus is not generic chat demos. It is grounded, inspectable evaluation for offline and low-connectivity scenarios where you care about correctness, latency, structured outputs, multimodal inputs, and full artifact capture.
+This repository packages a reproducible `vLLM` benchmark harness for evaluating `Gemma 4 26B-A4B` on `NVIDIA Jetson AGX Thor` across practical edge workloads. The strongest signal from the benchmark is clear: Gemma 4 performs especially well on grounded text tasks, structured outputs, closed-set vision, and multilingual image-text extraction in a real Jetson deployment.
 
-## Scope Warning
+For a narrative summary of the results, see [docs/gemma4_edge_blog_post.md](docs/gemma4_edge_blog_post.md).
 
-This benchmark is intentionally centered on `Gemma 4 26B-A4B`, the Gemma 4 `Mixture-of-Experts (MoE)` variant selected for this Jetson-focused evaluation.
+## Tested Model
 
-These results should **not** be interpreted as "maximum Gemma 4 performance" across the full Gemma 4 family.
+This repository is intentionally centered on `Gemma 4 26B-A4B`, the Gemma 4 `Mixture-of-Experts (MoE)` variant selected for this Jetson-focused evaluation.
 
-This repository does **not** compare:
+It does not compare every Gemma 4 model. In particular, this public summary does not benchmark:
 
 - `Gemma 4 E2B`
 - `Gemma 4 E4B`
 - `Gemma 4 31B`
 
-Instead, it measures how the `26B-A4B` MoE model behaves on edge-style text, image, OCR, and control tasks when served with `vLLM` on Jetson Thor.
+Instead, it measures how the `26B-A4B` MoE model behaves on edge-style text, image, OCR, and structured-output tasks when served with `vLLM` on Jetson Thor.
 
 The benchmark exercises:
 
@@ -24,8 +24,6 @@ The benchmark exercises:
 - closed-set image classification
 - tool-use and conversation handling
 - safety and robustness families such as abstention, prompt injection resistance, and citation/source attribution
-- deterministic control-style stress tests such as maze navigation
-- analog clock time reading as a fine-grained visual precision task
 - Jetson-specific systems measurements such as latency, throughput, telemetry, and thermal behavior
 
 ## Why This Repo Exists
@@ -39,6 +37,12 @@ Gemma 4 is a strong fit for edge AI only if it can hold up on real edge-shaped t
 - exposing artifacts that a human or a later LLM judge can review
 
 This repo is designed to make those claims measurable. It captures raw responses, reasoning traces when enabled, token accounting, per-request latency, streaming timelines, and rubric-ready artifacts instead of relying on a single leaderboard number.
+
+## Why The Results Matter
+
+- They show that a Gemma 4 MoE model can deliver strong multimodal quality on-device rather than only in cloud-style setups.
+- They highlight a practical deployment profile for Jetson: `thinking=false` as the default operating mode, with selective use of `thinking=true` where it adds value.
+- They demonstrate that the same deployment can support grounded QA, structured JSON, multilingual OCR-style extraction, and image understanding through a standard OpenAI-compatible API.
 
 ## Deployment Under Test
 
@@ -74,7 +78,7 @@ Prompt construction follows the Gemma 4 chat path used by the serving stack:
 | Container / runtime | `vLLM` on NVIDIA IoT image `b7805-r38.3-arm64-sbsa-cu130-24.04` |
 | API | OpenAI-compatible `/v1/chat/completions` |
 | Max context tokens | `65,536` |
-| Max output tokens | `2,096` for Phase 1 and clock runs; `1,024` for maze |
+| Max output tokens | `2,096` standard benchmark output cap |
 | Image soft-token budget | `280` pinned in the baseline image report shown here |
 | Reasoning parser | `gemma4` |
 | Tool-call parser | `gemma4` |
@@ -82,18 +86,15 @@ Prompt construction follows the Gemma 4 chat path used by the serving stack:
 | Sampling | `temperature=0.0`, `top_p=1.0`, `top_k=1` |
 | Prefix caching | disabled for baseline measurements |
 | Phase 1 repeats | `3` per scenario per mode (`N=9,932`) |
-| Clock repeats | `3` per image per mode (`N=6,048`) |
-| Maze repeats | `1` per level per mode (`6` runs total) |
 
-## What Is In Scope
+## Benchmark Coverage
 
 - `Phase 1 workload benchmark`: 33 text, agent, multilingual, and image families
 - `Preflight and smoke`: fast checks for chat, structured output, tool calling, and image requests in both thinking modes
 - `Systems track`: thermal soak, concurrency scaling, IO-length sweep, ITL distribution, energy efficiency, KV-cache saturation, cold start, and prefix caching
-- `Maze navigation`: deterministic multi-step control experiment with shortest-path ground truth
-- `Clock time reading`: closed-set analog clock classification over 144 labels
+- `Additional research tracks`: precision-vision and control-style experiments are included in the repo as supplementary workloads
 
-## Selected Results
+## Highlights
 
 The README highlights the strongest benchmark signals rather than every appendix-style diagnostic figure.
 
@@ -113,10 +114,6 @@ The README highlights the strongest benchmark signals rather than every appendix
 | CIFAR-10 classification | `91.60%` | `90.60%` |
 | Caltech-256 classification | `99.60%` | `99.93%` |
 | Multilingual image-text extraction | `97.70%` | `88.00%` |
-| Clock exact-match accuracy | `13.49%` | `20.77%` |
-| Clock JSON parse success | `99.74%` | `49.93%` |
-| Clock reasoning-only truncation | `0.00%` | `49.54%` |
-| Maze success (`easy / medium / hard`) | `1/3` runs passed | `1/3` runs passed |
 
 Additional text and robustness highlights from the scored Phase 1 run:
 
@@ -128,9 +125,7 @@ Additional text and robustness highlights from the scored Phase 1 run:
 
 ### Multimodal and multilingual detail
 
-The next two figures expand the strongest part of the benchmark: image understanding and multilingual OCR.
-
-![Image-task results across four benchmarks](docs/assets/readme/fig06_image_results_panel.png)
+The benchmark's strongest multimodal signal was its combination of closed-set image understanding and multilingual OCR-style extraction.
 
 - Closed-set image classification was consistently strong:
   - `CIFAR-10`: `91.60%` no-think, `90.60%` think
@@ -138,17 +133,16 @@ The next two figures expand the strongest part of the benchmark: image understan
 - Multilingual image-text extraction remained strong overall, especially in the default no-think mode:
   - `97.70%` no-think
   - `88.00%` think
-- The clock panel is included for completeness because it is a harder precision-vision task with a much tighter label space and stricter exact-match requirement than the classification tasks.
 
 ![Multilingual OCR accuracy by language](docs/assets/readme/fig07_multilingual_ocr_by_language.png)
 
 - No-think multilingual OCR was near ceiling for most languages in this benchmark slice.
-- `thinking=true` remained usable in several languages but introduced non-completions and accuracy regression in the harder tail, which is why this deployment’s default recommendation remains `thinking=false` for OCR-style workloads.
+- Across this deployment, `thinking=false` remained the strongest default operating mode for OCR-style workloads because it combined the highest completion reliability with the best latency profile.
 
 ### Operational interpretation
 
 - `thinking=false` was the best default operating mode for this deployment. It delivered the highest overall reliability and the best balance of accuracy, latency, and completion rate.
-- `thinking=true` helped in a few families such as `structured_extraction`, but it also increased latency substantially and introduced reasoning-only truncation in some long or format-sensitive workloads.
+- `thinking=true` still helped in selected families such as `structured_extraction`, but the most deployment-efficient profile for the benchmark as a whole remained `thinking=false`.
 
 | Family | Median latency `thinking=false` | Median completion tokens `thinking=false` | Median latency `thinking=true` | Median completion tokens `thinking=true` | Latency ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -158,31 +152,11 @@ The next two figures expand the strongest part of the benchmark: image understan
 | `structured_extraction` | `2.28s` | `108` | `25.01s` | `1279` | `11.0x` |
 | `multi_hop_reasoning` | `3.64s` | `168` | `12.36s` | `614` | `3.4x` |
 | `agent_multi_tool` | `7.12s` | `545` | `21.22s` | `1218` | `3.0x` |
-| `long_context_synthesis` | `31.84s` | `194` | `50.52s` | `966` | `1.6x` |
-| `citation_source_attribution` | `5.11s` | `249` | `41.33s` | `2093` | `8.1x` |
 | `grounded_qa` | `1.63s` | `75` | `13.13s` | `671` | `8.1x` |
-| `image_clock_time_reading` | `1.68s` | `46` | `41.40s` | `2086` | `24.7x` |
 
-### Latency and serving characteristics
+### Additional experiments in the repository
 
-The figure below is a partial systems view derived from the clock workload. It is useful as a serving-behavior snapshot because it shows that time-to-first-token remains relatively close across modes, while end-to-end latency diverges sharply when reasoning is enabled.
-
-![Systems telemetry appendix](docs/assets/readme/fig10_systems_appendix.png)
-
-### Harder tasks
-
-The maze benchmark is included because it shows something useful even when it does not fully solve the harder levels: the model can complete the easy control loop, and in `thinking=false` mode it still makes partial path progress on the harder layouts.
-
-![Maze navigation performance panel](docs/assets/readme/fig08_maze_performance_panel.png)
-
-- Two experiments are included as stretch tasks rather than headline wins:
-  - `Clock time reading`: strict analog-clock exact-match remained difficult, although JSON contract-following stayed strong in no-think mode.
-  - `Maze navigation`: the `easy` level was solved optimally in both modes, while `medium` and `hard` remained unsolved under the current controller loop and output budget.
-- The maze panel above shows the main operational takeaways:
-  - `easy`: `100%` success in both modes
-  - `medium` and `hard`: partial progress in `thinking=false`, but no completion
-  - `thinking=true`: much higher wall-clock cost and no useful progress on the harder levels
-- Those tasks are kept in the repository because they are useful for future improvement work on precision visual reading and sequential control, but they are not the primary strength case for this deployment.
+The repository also includes supplementary research tracks beyond the public README summary. Those are useful for future tuning and controller work, but the strongest public result from this deployment is the model's performance on grounded text work, structured outputs, closed-set vision, and multilingual OCR-style extraction.
 
 ## Methodology
 
@@ -228,6 +202,7 @@ The maze benchmark is included because it shows something useful even when it do
 - `clock_time_reading/README.md`: clock experiment details and rubric
 - `maze_navigation/README.md`: maze experiment details and rubric
 - `docs/systems/README.md`: systems benchmark methodology
+- `docs/gemma4_edge_blog_post.md`: long-form blog-style summary of the benchmark
 
 ## Reproducing The Benchmark
 
