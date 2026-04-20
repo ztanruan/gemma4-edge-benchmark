@@ -51,6 +51,24 @@ Prompt construction follows the Gemma 4 chat path used by the serving stack:
 - schema-constrained JSON where structured output matters
 - multimodal chat requests for image workloads
 
+| Deployment condition | Value |
+| --- | --- |
+| Hardware | `NVIDIA Jetson Thor (aarch64, Linux-6.8.12-tegra)` |
+| Model | `bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4` |
+| Container / runtime | `vLLM` on NVIDIA IoT image `b7805-r38.3-arm64-sbsa-cu130-24.04` |
+| API | OpenAI-compatible `/v1/chat/completions` |
+| Max context tokens | `65,536` |
+| Max output tokens | `2,096` for Phase 1 and clock runs; `1,024` for maze |
+| Image soft-token budget | `280` pinned in the baseline image report shown here |
+| Reasoning parser | `gemma4` |
+| Tool-call parser | `gemma4` |
+| Thinking modes tested | `false` and `true` |
+| Sampling | `temperature=0.0`, `top_p=1.0`, `top_k=1` |
+| Prefix caching | disabled for baseline measurements |
+| Phase 1 repeats | `3` per scenario per mode (`N=9,932`) |
+| Clock repeats | `3` per image per mode (`N=6,048`) |
+| Maze repeats | `1` per level per mode (`6` runs total) |
+
 ## What Is In Scope
 
 - `Phase 1 workload benchmark`: 33 text, agent, multilingual, and image families
@@ -61,40 +79,94 @@ Prompt construction follows the Gemma 4 chat path used by the serving stack:
 
 ## Selected Results
 
-### Phase 1 workload benchmark
+The README highlights the strongest benchmark signals rather than every appendix-style diagnostic figure.
 
-- Weighted across `9,932` scored records, semantic task-completion accuracy was `93.43%`.
-- Overall by mode, semantic accuracy was `95.45%` with `thinking=false` and `91.40%` with `thinking=true`.
-- Because the large image families dominate total volume, the more honest non-image view was lower: `82.28%` with `thinking=false` and `72.47%` with `thinking=true`.
-- Closed-set vision was strong in the baseline `max_soft_tokens=280` run:
-  - `image_classification_cifar10`: `91.60%` no-think, `90.60%` think
-  - `image_classification_caltech256`: `99.60%` no-think, `99.93%` think
-  - `image_text_extraction_multilingual`: `97.70%` no-think, `88.00%` think
-- Several operational text families were very strong in this run. `multi_hop_reasoning`, `temporal_sequence_reasoning`, `prompt_injection_resistance`, `abstention_calibration`, `prioritization_triage`, `redaction_pii_awareness`, and the multilingual grounded families all reached `100%` in both modes.
-- `structured_extraction` improved with reasoning: `90.00%` with `thinking=false` and `96.67%` with `thinking=true`.
-- Reasoning was not a universal win. It materially increased latency and introduced reasoning-only truncation in several long or format-sensitive families.
+![Phase 1 category accuracy by thinking mode](docs/assets/readme/fig02_phase1_category_accuracy.png)
 
-Concrete latency examples from the scored phase-one run:
+### Headline capability snapshot
 
-- `grounded_qa`: median `1.63s` with `thinking=false` vs `13.13s` with `thinking=true`
-- `structured_extraction`: median `2.28s` vs `25.01s`
-- `image_classification_caltech256`: median `1.45s` vs `7.26s`
-- `image_text_extraction_multilingual`: median `1.95s` vs `10.25s`
+- Weighted across `9,932` scored Phase 1 records, semantic task-completion accuracy was `93.43%`.
+- Overall by mode, Phase 1 accuracy was `95.45%` with `thinking=false` and `91.40%` with `thinking=true`.
+- The image category was the strongest top-level bucket in both modes: `96.3%` no-think and `92.7%` think.
+- The benchmark showed especially strong behavior on closed-set vision, multilingual OCR without reasoning, structured extraction, multi-hop reasoning, temporal reasoning, prompt injection resistance, and abstention-style guardrails.
 
-### Clock time reading
+| Metric | `thinking=false` | `thinking=true` |
+| --- | ---: | ---: |
+| Phase 1 weighted accuracy | `95.45%` | `91.40%` |
+| Phase 1 non-image accuracy | `82.28%` | `72.47%` |
+| CIFAR-10 classification | `91.60%` | `90.60%` |
+| Caltech-256 classification | `99.60%` | `99.93%` |
+| Multilingual image-text extraction | `97.70%` | `88.00%` |
+| Clock exact-match accuracy | `13.49%` | `20.77%` |
+| Clock JSON parse success | `99.74%` | `49.93%` |
+| Clock reasoning-only truncation | `0.00%` | `49.54%` |
+| Maze success (`easy / medium / hard`) | `1/3` runs passed | `1/3` runs passed |
 
-- The analog clock benchmark is a deliberately fine-grained closed-set image task with `144` possible labels from `1_00` through `12_55`.
-- In the completed `280`-token vision-budget run, the model achieved `13.5%` exact-match accuracy while still reaching `99.7%` JSON parse success.
-- That result is useful in practice because it separates two failure modes:
-  - contract-following was strong
-  - fine-grained hand-position recognition remained difficult
+Additional text and robustness highlights from the scored Phase 1 run:
 
-### Maze navigation
+- `structured_extraction`: `90.00%` no-think, `96.67%` think
+- `multi_hop_reasoning`: `100.00%` in both modes
+- `temporal_sequence_reasoning`: `100.00%` in both modes
+- `prompt_injection_resistance`: `100.00%` in both modes
+- `abstention_calibration`: `100.00%` in both modes
 
-- The maze benchmark is a deterministic sequential-control stress test, not a passive QA task.
-- The model solved the `easy` corridor level optimally in both reasoning modes.
-- Under the current prompt and output budget, the `medium` and `hard` levels were not completed.
-- This makes maze navigation a good stretch test for future prompt, decoding, and controller-loop improvements, but it is not currently a strength case for this deployment.
+### Multimodal and multilingual detail
+
+The next two figures expand the strongest part of the benchmark: image understanding and multilingual OCR.
+
+![Image-task results across four benchmarks](docs/assets/readme/fig06_image_results_panel.png)
+
+- Closed-set image classification was consistently strong:
+  - `CIFAR-10`: `91.60%` no-think, `90.60%` think
+  - `Caltech-256`: `99.60%` no-think, `99.93%` think
+- Multilingual image-text extraction remained strong overall, especially in the default no-think mode:
+  - `97.70%` no-think
+  - `88.00%` think
+- The clock panel is included for completeness because it is a harder precision-vision task with a much tighter label space and stricter exact-match requirement than the classification tasks.
+
+![Multilingual OCR accuracy by language](docs/assets/readme/fig07_multilingual_ocr_by_language.png)
+
+- No-think multilingual OCR was near ceiling for most languages in this benchmark slice.
+- `thinking=true` remained usable in several languages but introduced non-completions and accuracy regression in the harder tail, which is why this deployment’s default recommendation remains `thinking=false` for OCR-style workloads.
+
+### Operational interpretation
+
+- `thinking=false` was the best default operating mode for this deployment. It delivered the highest overall reliability and the best balance of accuracy, latency, and completion rate.
+- `thinking=true` helped in a few families such as `structured_extraction`, but it also increased latency substantially and introduced reasoning-only truncation in some long or format-sensitive workloads.
+
+| Family | Median latency `thinking=false` | Median completion tokens `thinking=false` | Median latency `thinking=true` | Median completion tokens `thinking=true` | Latency ratio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `image_classification_cifar10` | `1.43s` | `50` | `8.30s` | `412` | `5.8x` |
+| `image_classification_caltech256` | `1.45s` | `51` | `7.26s` | `357` | `5.0x` |
+| `image_text_extraction_multilingual` | `1.95s` | `78` | `10.25s` | `513` | `5.3x` |
+| `structured_extraction` | `2.28s` | `108` | `25.01s` | `1279` | `11.0x` |
+| `multi_hop_reasoning` | `3.64s` | `168` | `12.36s` | `614` | `3.4x` |
+| `agent_multi_tool` | `7.12s` | `545` | `21.22s` | `1218` | `3.0x` |
+| `long_context_synthesis` | `31.84s` | `194` | `50.52s` | `966` | `1.6x` |
+| `citation_source_attribution` | `5.11s` | `249` | `41.33s` | `2093` | `8.1x` |
+| `grounded_qa` | `1.63s` | `75` | `13.13s` | `671` | `8.1x` |
+| `image_clock_time_reading` | `1.68s` | `46` | `41.40s` | `2086` | `24.7x` |
+
+### Latency and serving characteristics
+
+The figure below is a partial systems view derived from the clock workload. It is useful as a serving-behavior snapshot because it shows that time-to-first-token remains relatively close across modes, while end-to-end latency diverges sharply when reasoning is enabled.
+
+![Systems telemetry appendix](docs/assets/readme/fig10_systems_appendix.png)
+
+### Harder tasks
+
+The maze benchmark is included because it shows something useful even when it does not fully solve the harder levels: the model can complete the easy control loop, and in `thinking=false` mode it still makes partial path progress on the harder layouts.
+
+![Maze navigation performance panel](docs/assets/readme/fig08_maze_performance_panel.png)
+
+- Two experiments are included as stretch tasks rather than headline wins:
+  - `Clock time reading`: strict analog-clock exact-match remained difficult, although JSON contract-following stayed strong in no-think mode.
+  - `Maze navigation`: the `easy` level was solved optimally in both modes, while `medium` and `hard` remained unsolved under the current controller loop and output budget.
+- The maze panel above shows the main operational takeaways:
+  - `easy`: `100%` success in both modes
+  - `medium` and `hard`: partial progress in `thinking=false`, but no completion
+  - `thinking=true`: much higher wall-clock cost and no useful progress on the harder levels
+- Those tasks are kept in the repository because they are useful for future improvement work on precision visual reading and sequential control, but they are not the primary strength case for this deployment.
 
 ## Methodology
 
