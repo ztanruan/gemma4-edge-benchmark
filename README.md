@@ -2,6 +2,20 @@
 
 This repository packages a reproducible `vLLM` benchmark harness for evaluating `Gemma 4 26B-A4B` on `NVIDIA Jetson AGX Thor` across practical edge workloads. The focus is not generic chat demos. It is grounded, inspectable evaluation for offline and low-connectivity scenarios where you care about correctness, latency, structured outputs, multimodal inputs, and full artifact capture.
 
+## Scope Warning
+
+This benchmark is intentionally centered on `Gemma 4 26B-A4B`, the Gemma 4 `Mixture-of-Experts (MoE)` variant selected for this Jetson-focused evaluation.
+
+These results should **not** be interpreted as "maximum Gemma 4 performance" across the full Gemma 4 family.
+
+This repository does **not** compare:
+
+- `Gemma 4 E2B`
+- `Gemma 4 E4B`
+- `Gemma 4 31B`
+
+Instead, it measures how the `26B-A4B` MoE model behaves on edge-style text, image, OCR, and control tasks when served with `vLLM` on Jetson Thor.
+
 The benchmark exercises:
 
 - grounded document QA and summarization
@@ -43,6 +57,8 @@ The public summary in this repository reflects runs collected on `April 17-18, 2
 - Additional image configs included: `560` and `1120`
 - Prefix caching: disabled for baseline correctness and latency runs, with a separate backend profile for prefix-caching experiments
 - Prompt-token accounting: uses vLLM's chat-aware `/tokenize` path with structured `messages`, so counts reflect the actual Gemma 4 chat template instead of a flattened approximation
+
+This choice of model was deliberate. `26B-A4B` is the Gemma 4 MoE configuration evaluated here because it offers a different deployment tradeoff from the smaller `E2B` and `E4B` models and from the larger dense `31B` model. The goal of this repo is to characterize that MoE deployment on Jetson, not to rank every Gemma 4 variant.
 
 Prompt construction follows the Gemma 4 chat path used by the serving stack:
 
