@@ -1,4 +1,18 @@
+<div align="center">
+
 # Gemma 4 Edge Benchmark on Jetson Thor
+
+**A reproducible vLLM benchmark harness for Gemma 4 26B-A4B on NVIDIA Jetson AGX Thor — grounded text, structured output, vision, multilingual OCR, tool use, and systems behavior, measured on real edge hardware.**
+
+[![CI](https://github.com/ztanruan/gemma4-edge-benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/ztanruan/gemma4-edge-benchmark/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Model: Gemma 4](https://img.shields.io/badge/model-Gemma%204%2026B--A4B-4285F4)](https://ai.google.dev/gemma)
+[![Serving: vLLM](https://img.shields.io/badge/serving-vLLM-orange)](https://github.com/vllm-project/vllm)
+
+</div>
+
+---
 
 This repository packages a reproducible `vLLM` benchmark harness for evaluating `Gemma 4 26B-A4B` on `NVIDIA Jetson AGX Thor` across practical edge workloads. The strongest signal from the benchmark is clear: Gemma 4 performs especially well on grounded text tasks, structured outputs, closed-set vision, and multilingual image-text extraction in a real Jetson deployment.
 
@@ -185,6 +199,8 @@ The repository also includes supplementary research tracks beyond the public REA
 
 ## Repository Layout
 
+- `src/gemma_vllm_benchmark/`: the harness package (runner, scoring, systems, maze, asset staging)
+- `tests/`: offline test suite — validates manifests, corpora, and the deterministic maze/parsing logic without a vLLM endpoint
 - `benchmarks/manifest.yaml`: workload definitions and scenario families
 - `configs/backends/`: backend profiles for baseline, prefix caching, and image budgets
 - `configs/generation_profiles.yaml`: standardized generation settings
@@ -213,7 +229,7 @@ This repo is intended to be run from the repository root.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 ```
 
 2. Place local source datasets under `data/source_datasets/`.
@@ -298,3 +314,22 @@ The following are intentionally treated as local-only artifacts and are ignored 
 - generated scenario docs under `docs/scenarios/`
 
 This keeps the public repo small, reproducible, and free of machine-specific traces such as absolute local paths, telemetry logs, and raw streaming artifacts.
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pre-commit install          # optional
+pytest -q                   # offline — no Jetson, GPU, or vLLM endpoint needed
+ruff check . && ruff format --check .
+```
+
+The test suite validates the benchmark manifests, corpora, backend configs, and the deterministic maze-navigation and parsing logic without contacting a model server. CI runs ruff and pytest on Python 3.10-3.13. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope and guidelines.
+
+## Citation
+
+If you use this harness or its results, please cite the repository — see [CITATION.cff](CITATION.cff).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Benchmark corpora under `data/` are synthetic fixtures created for this project. Source image datasets (CIFAR-10, Caltech-256, and the clock and multilingual OCR sets) are not redistributed here; obtain them from their original distributions under their own licenses.

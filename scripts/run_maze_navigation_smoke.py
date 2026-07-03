@@ -30,7 +30,9 @@ def _thinking_modes(value: str) -> list[bool]:
 
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
 
 
 def _artifact_integrity(step_records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -58,8 +60,16 @@ def _artifact_integrity(step_records: list[dict[str, Any]]) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend-config", required=True, type=Path)
-    parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "maze_navigation_smoke_runs")
-    parser.add_argument("--levels-path", type=Path, default=PROJECT_ROOT / "maze_navigation" / "levels.yaml")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=PROJECT_ROOT / "outputs" / "maze_navigation_smoke_runs",
+    )
+    parser.add_argument(
+        "--levels-path",
+        type=Path,
+        default=PROJECT_ROOT / "maze_navigation" / "levels.yaml",
+    )
     parser.add_argument("--thinking", type=_thinking_modes, default=[False, True])
     parser.add_argument("--with-tegrastats", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -110,10 +120,18 @@ def main() -> None:
         "step_record_count": len(step_records),
         "success_count": sum(1 for record in run_records if record.get("success_reached_exit")),
         "termination_reasons": sorted({record.get("termination_reason") for record in run_records}),
-        "invalid_format_count_total": sum(int(record.get("invalid_format_count") or 0) for record in run_records),
-        "invalid_transition_count_total": sum(int(record.get("invalid_transition_count") or 0) for record in run_records),
-        "parser_failure_count_total": sum(int(record.get("parser_failure_count") or 0) for record in run_records),
-        "unexpected_tool_call_count_total": sum(int(record.get("unexpected_tool_call_count") or 0) for record in run_records),
+        "invalid_format_count_total": sum(
+            int(record.get("invalid_format_count") or 0) for record in run_records
+        ),
+        "invalid_transition_count_total": sum(
+            int(record.get("invalid_transition_count") or 0) for record in run_records
+        ),
+        "parser_failure_count_total": sum(
+            int(record.get("parser_failure_count") or 0) for record in run_records
+        ),
+        "unexpected_tool_call_count_total": sum(
+            int(record.get("unexpected_tool_call_count") or 0) for record in run_records
+        ),
         "artifact_integrity": _artifact_integrity(step_records),
         "run_records_path": str(run_dir / "records.jsonl"),
         "step_records_path": str(run_dir / "step_records.jsonl"),

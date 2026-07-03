@@ -15,8 +15,12 @@ from typing import Any
 import requests
 import yaml
 
-from .tegrastats import TegraStatsSession, capture_tegrastats_snapshot, summarize_tegrastats_log, write_tegrastats_timeseries
-
+from .tegrastats import (
+    TegraStatsSession,
+    capture_tegrastats_snapshot,
+    summarize_tegrastats_log,
+    write_tegrastats_timeseries,
+)
 
 SYSTEM_PROMPT = (
     "You are Gemma 4 running through vLLM on Jetson Thor for a benchmark. "
@@ -490,13 +494,17 @@ def _scenario_prompt_token_detail(
     return None
 
 
-def _compute_end_to_end_tokens_per_second(latency_ms: float | None, completion_tokens: int | None) -> float | None:
+def _compute_end_to_end_tokens_per_second(
+    latency_ms: float | None, completion_tokens: int | None
+) -> float | None:
     if latency_ms is None or latency_ms <= 0 or not completion_tokens:
         return None
     return completion_tokens / (latency_ms / 1000.0)
 
 
-def _metric_average(metric_values: dict[str, Any] | None, sum_name: str, count_name: str) -> float | None:
+def _metric_average(
+    metric_values: dict[str, Any] | None, sum_name: str, count_name: str
+) -> float | None:
     if not metric_values:
         return None
     counters = metric_values.get("counter_deltas") or {}
@@ -507,7 +515,9 @@ def _metric_average(metric_values: dict[str, Any] | None, sum_name: str, count_n
     return total / count
 
 
-def _derive_server_stats(completion: dict[str, Any], metric_values: dict[str, Any] | None) -> dict[str, Any]:
+def _derive_server_stats(
+    completion: dict[str, Any], metric_values: dict[str, Any] | None
+) -> dict[str, Any]:
     usage = completion.get("usage") or {}
     gauges_after = (metric_values or {}).get("gauges_after") or {}
     counters = (metric_values or {}).get("counter_deltas") or {}
@@ -515,11 +525,31 @@ def _derive_server_stats(completion: dict[str, Any], metric_values: dict[str, An
         "server_prompt_tokens": usage.get("prompt_tokens"),
         "server_completion_tokens": usage.get("completion_tokens"),
     }
-    ttft_seconds = _metric_average(metric_values, "vllm:time_to_first_token_seconds_sum", "vllm:time_to_first_token_seconds_count")
-    e2e_seconds = _metric_average(metric_values, "vllm:e2e_request_latency_seconds_sum", "vllm:e2e_request_latency_seconds_count")
-    prefill_seconds = _metric_average(metric_values, "vllm:request_prefill_time_seconds_sum", "vllm:request_prefill_time_seconds_count")
-    decode_seconds = _metric_average(metric_values, "vllm:request_decode_time_seconds_sum", "vllm:request_decode_time_seconds_count")
-    queue_seconds = _metric_average(metric_values, "vllm:request_queue_time_seconds_sum", "vllm:request_queue_time_seconds_count")
+    ttft_seconds = _metric_average(
+        metric_values,
+        "vllm:time_to_first_token_seconds_sum",
+        "vllm:time_to_first_token_seconds_count",
+    )
+    e2e_seconds = _metric_average(
+        metric_values,
+        "vllm:e2e_request_latency_seconds_sum",
+        "vllm:e2e_request_latency_seconds_count",
+    )
+    prefill_seconds = _metric_average(
+        metric_values,
+        "vllm:request_prefill_time_seconds_sum",
+        "vllm:request_prefill_time_seconds_count",
+    )
+    decode_seconds = _metric_average(
+        metric_values,
+        "vllm:request_decode_time_seconds_sum",
+        "vllm:request_decode_time_seconds_count",
+    )
+    queue_seconds = _metric_average(
+        metric_values,
+        "vllm:request_queue_time_seconds_sum",
+        "vllm:request_queue_time_seconds_count",
+    )
     generation_tokens = counters.get("vllm:generation_tokens_total")
     if ttft_seconds is not None:
         derived["server_ttft_ms"] = ttft_seconds * 1000.0
@@ -556,7 +586,9 @@ def collect_run_metadata(
         "system": {
             "uname": _run_command(["uname", "-a"]),
             "nv_tegra_release": _read_text(Path("/etc/nv_tegra_release")),
-            "nvidia_l4t_core": _run_command(["dpkg-query", "-W", "-f=${Version}", "nvidia-l4t-core"]),
+            "nvidia_l4t_core": _run_command(
+                ["dpkg-query", "-W", "-f=${Version}", "nvidia-l4t-core"]
+            ),
             "nvidia_jetpack": _run_command(["dpkg-query", "-W", "-f=${Version}", "nvidia-jetpack"]),
             "nvpmodel_q": _run_command(["nvpmodel", "-q"]),
             "jetson_clocks_show": _run_command(["jetson_clocks", "--show"]),
@@ -637,24 +669,28 @@ def _build_user_turn_message(
     if turn_index is not None:
         lines.append(f"Conversation Turn: {turn_index}")
     if context_files:
-        lines.extend([
-            "",
-            "Provided context files:",
-        ])
+        lines.extend(
+            [
+                "",
+                "Provided context files:",
+            ]
+        )
         for rel_path in context_files:
             lines.append(f"[BEGIN FILE: {rel_path}]")
             lines.append(context_map[rel_path].strip())
             lines.append(f"[END FILE: {rel_path}]")
             lines.append("")
     elif scenario.get("image_files"):
-        lines.extend([
-            "",
-            "Provided inputs:",
-            "- One or more images are attached in this request.",
-            "- No text context files are provided.",
-            "- Use only visible image evidence plus the task instructions below.",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "Provided inputs:",
+                "- One or more images are attached in this request.",
+                "- No text context files are provided.",
+                "- Use only visible image evidence plus the task instructions below.",
+                "",
+            ]
+        )
     lines.extend(["Task:", task, "", "Response requirements:"])
     lines.extend(f"- {item}" for item in response_requirements)
     return "\n".join(lines).strip()
@@ -670,7 +706,9 @@ def _build_user_message(scenario: dict[str, Any], context_map: dict[str, str]) -
     )
 
 
-def _build_user_content(project_root: Path, scenario: dict[str, Any], context_map: dict[str, str]) -> Any:
+def _build_user_content(
+    project_root: Path, scenario: dict[str, Any], context_map: dict[str, str]
+) -> Any:
     text = _build_user_message(scenario, context_map)
     image_files = scenario.get("image_files") or []
     if not image_files:
@@ -734,8 +772,10 @@ def _prepare_messages_for_request(
     scenario_budget = scenario.get("max_context_tokens")
     enforce_prompt_budget = not scenario.get("skip_prompt_budget_enforcement", False)
     effective_max_context_tokens = (
-        backend_max_context_tokens if backend_max_context_tokens is not None else scenario_budget
-    ) if enforce_prompt_budget else None
+        (backend_max_context_tokens if backend_max_context_tokens is not None else scenario_budget)
+        if enforce_prompt_budget
+        else None
+    )
     system_message = _build_system_message(scenario)
     working_context = {rel_path: context_map[rel_path] for rel_path in scenario["context_files"]}
     truncated_context_files: list[str] = []
@@ -745,7 +785,10 @@ def _prepare_messages_for_request(
     def _messages_from_contexts(local_context: dict[str, str]) -> list[dict[str, Any]]:
         return [
             {"role": "system", "content": system_message},
-            {"role": "user", "content": _build_user_content(project_root, scenario, local_context)},
+            {
+                "role": "user",
+                "content": _build_user_content(project_root, scenario, local_context),
+            },
         ]
 
     messages = _messages_from_contexts(working_context)
@@ -815,9 +858,13 @@ def _prepare_messages_for_request(
     for _attempt in range(12):
         if prompt_tokens is not None and prompt_tokens <= allowed_prompt_tokens:
             break
-        reduction_ratio = max(0.05, min(0.98, (allowed_prompt_tokens / max(prompt_tokens or 1, 1)) * 0.97))
+        reduction_ratio = max(
+            0.05, min(0.98, (allowed_prompt_tokens / max(prompt_tokens or 1, 1)) * 0.97)
+        )
         changed = False
-        for rel_path in sorted(context_files, key=lambda item: len(working_context[item]), reverse=True):
+        for rel_path in sorted(
+            context_files, key=lambda item: len(working_context[item]), reverse=True
+        ):
             current_text = working_context[rel_path]
             min_chars = 256
             target_chars = max(min_chars, int(len(current_text) * reduction_ratio))
@@ -838,7 +885,10 @@ def _prepare_messages_for_request(
             tools=scenario["tools"] if scenario["mode"] == "agent" else None,
         )
 
-    if prompt_tokens is None or prompt_tokens + generation_profile["max_tokens"] > effective_max_context_tokens:
+    if (
+        prompt_tokens is None
+        or prompt_tokens + generation_profile["max_tokens"] > effective_max_context_tokens
+    ):
         raise ValueError(
             f"Scenario {scenario['id']} exceeds the configured context budget after truncation: "
             f"prompt_tokens={prompt_tokens}, max_output_tokens={generation_profile['max_tokens']}, "
@@ -873,7 +923,9 @@ def _prepare_messages_for_conversation_turn(
     estimate_tokens: bool = True,
 ) -> dict[str, Any]:
     scenario_budget = scenario.get("max_context_tokens")
-    effective_max_context_tokens = backend_max_context_tokens if backend_max_context_tokens is not None else scenario_budget
+    effective_max_context_tokens = (
+        backend_max_context_tokens if backend_max_context_tokens is not None else scenario_budget
+    )
     context_files = turn.get("context_files") or scenario["context_files"]
     response_requirements = turn.get("response_requirements") or scenario["response_requirements"]
     working_context = {rel_path: context_map[rel_path] for rel_path in context_files}
@@ -957,9 +1009,13 @@ def _prepare_messages_for_conversation_turn(
     for _attempt in range(12):
         if prompt_tokens is not None and prompt_tokens <= allowed_prompt_tokens:
             break
-        reduction_ratio = max(0.05, min(0.98, (allowed_prompt_tokens / max(prompt_tokens or 1, 1)) * 0.97))
+        reduction_ratio = max(
+            0.05, min(0.98, (allowed_prompt_tokens / max(prompt_tokens or 1, 1)) * 0.97)
+        )
         changed = False
-        for rel_path in sorted(context_files, key=lambda item: len(working_context[item]), reverse=True):
+        for rel_path in sorted(
+            context_files, key=lambda item: len(working_context[item]), reverse=True
+        ):
             current_text = working_context[rel_path]
             min_chars = 256
             target_chars = max(min_chars, int(len(current_text) * reduction_ratio))
@@ -980,7 +1036,10 @@ def _prepare_messages_for_conversation_turn(
             tools=scenario["tools"] if scenario["mode"] == "agent" else None,
         )
 
-    if prompt_tokens is None or prompt_tokens + generation_profile["max_tokens"] > effective_max_context_tokens:
+    if (
+        prompt_tokens is None
+        or prompt_tokens + generation_profile["max_tokens"] > effective_max_context_tokens
+    ):
         raise ValueError(
             f"Scenario {scenario['id']} turn {turn_index} exceeds the configured context budget after truncation: "
             f"prompt_tokens={prompt_tokens}, max_output_tokens={generation_profile['max_tokens']}, "
@@ -1022,7 +1081,9 @@ def _parse_json_maybe(value: str) -> Any:
         return value
 
 
-def _normalize_tool_calls(tool_calls_map: dict[int, dict[str, Any]]) -> list[dict[str, Any]]:
+def _normalize_tool_calls(
+    tool_calls_map: dict[int, dict[str, Any]],
+) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
     for index in sorted(tool_calls_map):
         call = tool_calls_map[index]
@@ -1190,7 +1251,11 @@ def request_chat_completion(
                 index = tool_delta.get("index", 0)
                 current = tool_calls_map.setdefault(
                     index,
-                    {"id": None, "type": tool_delta.get("type", "function"), "function": {"name": "", "arguments": ""}},
+                    {
+                        "id": None,
+                        "type": tool_delta.get("type", "function"),
+                        "function": {"name": "", "arguments": ""},
+                    },
                 )
                 if tool_delta.get("id"):
                     current["id"] = tool_delta["id"]
@@ -1228,7 +1293,9 @@ def request_chat_completion(
         usage.setdefault("completion_tokens_source", "server_usage")
 
     completion_tokens = reported_completion_tokens
-    assistant_fallback_text = "\n".join(part for part in [reasoning, content, _tool_calls_fallback_text(tool_calls)] if part)
+    assistant_fallback_text = "\n".join(
+        part for part in [reasoning, content, _tool_calls_fallback_text(tool_calls)] if part
+    )
     if completion_tokens in (None, 0) and assistant_fallback_text.strip():
         completion_token_fallback_debug = tokenize_text_detailed(
             base_url=base_url,
@@ -1242,7 +1309,9 @@ def request_chat_completion(
             usage["completion_tokens"] = completion_tokens
             usage["completion_tokens_source"] = "tokenize_completion_fallback"
 
-    end_to_end_tokens_per_second = _compute_end_to_end_tokens_per_second(latency_ms, completion_tokens)
+    end_to_end_tokens_per_second = _compute_end_to_end_tokens_per_second(
+        latency_ms, completion_tokens
+    )
     reasoning_only_truncated = _detect_reasoning_only_truncated(
         content,
         reasoning,
@@ -1316,9 +1385,15 @@ def _compare_expected_tool_calls(
             "expected_arguments": expected.get("arguments") if expected else None,
         }
         comparison["name_match"] = expected is not None and call_name == expected.get("name")
-        comparison["arguments_match"] = expected is not None and parsed_args == expected.get("arguments")
+        comparison["arguments_match"] = expected is not None and parsed_args == expected.get(
+            "arguments"
+        )
         comparisons.append(comparison)
-    return {"expected_count": len(expected_calls), "actual_count": len(actual_calls), "comparisons": comparisons}
+    return {
+        "expected_count": len(expected_calls),
+        "actual_count": len(actual_calls),
+        "comparisons": comparisons,
+    }
 
 
 def _resolve_tool_results(
@@ -1389,43 +1464,63 @@ def _record_non_agent_turn(
     repeat_index: int,
     with_tegrastats: bool,
 ) -> dict[str, Any]:
-    response_base = run_paths.responses_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    response_base = (
+        run_paths.responses_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    )
     response_base.mkdir(parents=True, exist_ok=True)
     _write_json(response_base / "messages.json", messages)
 
-    telemetry_path = run_paths.telemetry_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    telemetry_path = (
+        run_paths.telemetry_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    )
     tegra = TegraStatsSession(telemetry_path)
     tegra_active = False
     if with_tegrastats:
         tegra_active = tegra.start()
 
     metrics_before = scrape_metrics(base_url, api_key)
-    _write_metrics_snapshot(run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__before.prom", metrics_before)
+    _write_metrics_snapshot(
+        run_paths.metrics_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__before.prom",
+        metrics_before,
+    )
 
     try:
-            completion = request_chat_completion(
-                base_url=base_url,
-                api_key=api_key,
-                model=backend_fields["model"],
-                messages=messages,
-                generation=profile,
-                thinking_enabled=thinking_enabled,
-                prompt_token_estimate=prompt_tokens,
-                response_format=scenario.get("response_format"),
-                seed=seed,
-            )
+        completion = request_chat_completion(
+            base_url=base_url,
+            api_key=api_key,
+            model=backend_fields["model"],
+            messages=messages,
+            generation=profile,
+            thinking_enabled=thinking_enabled,
+            prompt_token_estimate=prompt_tokens,
+            response_format=scenario.get("response_format"),
+            seed=seed,
+        )
     finally:
         if tegra_active:
             tegra.stop()
 
     metrics_after = scrape_metrics(base_url, api_key)
-    _write_metrics_snapshot(run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__after.prom", metrics_after)
+    _write_metrics_snapshot(
+        run_paths.metrics_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__after.prom",
+        metrics_after,
+    )
     metric_values = metrics_delta(metrics_before, metrics_after)
 
     telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    )
     server_stats = _derive_server_stats(completion, metric_values)
-    effective_ttft_ms = completion["ttft_ms"] if completion["ttft_ms"] is not None else server_stats.get("server_ttft_ms")
+    effective_ttft_ms = (
+        completion["ttft_ms"]
+        if completion["ttft_ms"] is not None
+        else server_stats.get("server_ttft_ms")
+    )
     events_path = response_base / "response_events.sse"
     event_timeline_path = response_base / "response_events_timeline.jsonl"
     completion_token_debug_path = response_base / "completion_token_fallback_debug.json"
@@ -1436,7 +1531,10 @@ def _record_non_agent_turn(
     _write_text(response_base / "reasoning.txt", completion["reasoning"])
     _write_json(response_base / "response_tool_calls.json", completion["tool_calls"])
     _write_text(events_path, "\n".join(completion["raw_events"]))
-    _write_text(event_timeline_path, "\n".join(json.dumps(item) for item in completion["raw_event_records"]))
+    _write_text(
+        event_timeline_path,
+        "\n".join(json.dumps(item) for item in completion["raw_event_records"]),
+    )
     _write_json(request_payload_path, completion["request_payload"])
     if prompt_token_debug is not None:
         _write_json(prompt_token_debug_path, prompt_token_debug)
@@ -1476,18 +1574,24 @@ def _record_non_agent_turn(
         "prompt_path": str(run_paths.prompts_dir / prompt_name),
         "initial_prompt_token_estimate": prompt_tokens,
         "initial_prompt_token_debug": prompt_token_debug,
-        "initial_prompt_token_debug_path": str(prompt_token_debug_path) if prompt_token_debug is not None else None,
+        "initial_prompt_token_debug_path": str(prompt_token_debug_path)
+        if prompt_token_debug is not None
+        else None,
         "status": status,
         "turns": [
             {
                 "turn_index": 1,
                 "prompt_token_estimate": prompt_tokens,
                 "prompt_token_debug": prompt_token_debug,
-                "prompt_token_debug_path": str(prompt_token_debug_path) if prompt_token_debug is not None else None,
+                "prompt_token_debug_path": str(prompt_token_debug_path)
+                if prompt_token_debug is not None
+                else None,
                 "latency_ms": completion["latency_ms"],
                 "ttft_ms": completion["ttft_ms"],
                 "ttft_ms_effective": effective_ttft_ms,
-                "ttft_source": "client_stream" if completion["ttft_ms"] is not None else ("server_metrics" if effective_ttft_ms is not None else None),
+                "ttft_source": "client_stream"
+                if completion["ttft_ms"] is not None
+                else ("server_metrics" if effective_ttft_ms is not None else None),
                 "end_to_end_tokens_per_second": completion["end_to_end_tokens_per_second"],
                 "usage": completion["usage"],
                 "finish_reason": completion["finish_reason"],
@@ -1508,7 +1612,9 @@ def _record_non_agent_turn(
                 "server_metrics_delta": metric_values,
                 "server_stats": server_stats,
                 "completion_token_fallback_debug": completion["completion_token_fallback_debug"],
-                "completion_token_fallback_debug_path": str(completion_token_debug_path) if completion["completion_token_fallback_debug"] is not None else None,
+                "completion_token_fallback_debug_path": str(completion_token_debug_path)
+                if completion["completion_token_fallback_debug"] is not None
+                else None,
                 "reasoning_only_truncated": completion["reasoning_only_truncated"],
                 "empty_stream_bug": completion["empty_stream_bug"],
             }
@@ -1543,11 +1649,17 @@ def _record_agent_turns(
     repeat_index: int,
     with_tegrastats: bool,
 ) -> dict[str, Any]:
-    response_base = run_paths.responses_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    response_base = (
+        run_paths.responses_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    )
     response_base.mkdir(parents=True, exist_ok=True)
     _write_json(response_base / "turn_01_messages.json", initial_messages)
 
-    telemetry_path = run_paths.telemetry_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    telemetry_path = (
+        run_paths.telemetry_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    )
     tegra = TegraStatsSession(telemetry_path)
     tegra_active = False
     if with_tegrastats:
@@ -1576,7 +1688,8 @@ def _record_agent_turns(
             )
             metrics_before = scrape_metrics(base_url, api_key)
             _write_metrics_snapshot(
-                run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__before.prom",
+                run_paths.metrics_dir
+                / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__before.prom",
                 metrics_before,
             )
 
@@ -1595,40 +1708,70 @@ def _record_agent_turns(
 
             metrics_after = scrape_metrics(base_url, api_key)
             _write_metrics_snapshot(
-                run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__after.prom",
+                run_paths.metrics_dir
+                / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__after.prom",
                 metrics_after,
             )
             metric_values = metrics_delta(metrics_before, metrics_after)
 
             server_stats = _derive_server_stats(completion, metric_values)
-            effective_ttft_ms = completion["ttft_ms"] if completion["ttft_ms"] is not None else server_stats.get("server_ttft_ms")
+            effective_ttft_ms = (
+                completion["ttft_ms"]
+                if completion["ttft_ms"] is not None
+                else server_stats.get("server_ttft_ms")
+            )
             events_path = response_base / f"turn_{turn_index:02d}_events.sse"
             event_timeline_path = response_base / f"turn_{turn_index:02d}_events_timeline.jsonl"
-            completion_token_debug_path = response_base / f"turn_{turn_index:02d}_completion_token_fallback_debug.json"
+            completion_token_debug_path = (
+                response_base / f"turn_{turn_index:02d}_completion_token_fallback_debug.json"
+            )
             request_payload_path = response_base / f"turn_{turn_index:02d}_request_payload.json"
-            prompt_token_debug_path = response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
-            _write_text(response_base / f"turn_{turn_index:02d}_response.txt", completion["content"])
-            _write_text(response_base / f"turn_{turn_index:02d}_reasoning.txt", completion["reasoning"])
-            _write_json(response_base / f"turn_{turn_index:02d}_tool_calls.json", completion["tool_calls"])
+            prompt_token_debug_path = (
+                response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
+            )
+            _write_text(
+                response_base / f"turn_{turn_index:02d}_response.txt",
+                completion["content"],
+            )
+            _write_text(
+                response_base / f"turn_{turn_index:02d}_reasoning.txt",
+                completion["reasoning"],
+            )
+            _write_json(
+                response_base / f"turn_{turn_index:02d}_tool_calls.json",
+                completion["tool_calls"],
+            )
             _write_text(events_path, "\n".join(completion["raw_events"]))
-            _write_text(event_timeline_path, "\n".join(json.dumps(item) for item in completion["raw_event_records"]))
+            _write_text(
+                event_timeline_path,
+                "\n".join(json.dumps(item) for item in completion["raw_event_records"]),
+            )
             _write_json(request_payload_path, completion["request_payload"])
             if current_prompt_token_debug is not None:
                 _write_json(prompt_token_debug_path, current_prompt_token_debug)
             if completion["completion_token_fallback_debug"] is not None:
-                _write_json(completion_token_debug_path, completion["completion_token_fallback_debug"])
+                _write_json(
+                    completion_token_debug_path,
+                    completion["completion_token_fallback_debug"],
+                )
 
-            expected_comparison = _compare_expected_tool_calls(completion["tool_calls"], expected_tool_calls)
+            expected_comparison = _compare_expected_tool_calls(
+                completion["tool_calls"], expected_tool_calls
+            )
             resolution = _resolve_tool_results(completion["tool_calls"], remaining_results)
             turn_record = {
                 "turn_index": turn_index,
                 "prompt_token_estimate": current_prompt_tokens,
                 "prompt_token_debug": current_prompt_token_debug,
-                "prompt_token_debug_path": str(prompt_token_debug_path) if current_prompt_token_debug is not None else None,
+                "prompt_token_debug_path": str(prompt_token_debug_path)
+                if current_prompt_token_debug is not None
+                else None,
                 "latency_ms": completion["latency_ms"],
                 "ttft_ms": completion["ttft_ms"],
                 "ttft_ms_effective": effective_ttft_ms,
-                "ttft_source": "client_stream" if completion["ttft_ms"] is not None else ("server_metrics" if effective_ttft_ms is not None else None),
+                "ttft_source": "client_stream"
+                if completion["ttft_ms"] is not None
+                else ("server_metrics" if effective_ttft_ms is not None else None),
                 "end_to_end_tokens_per_second": completion["end_to_end_tokens_per_second"],
                 "usage": completion["usage"],
                 "finish_reason": completion["finish_reason"],
@@ -1651,7 +1794,9 @@ def _record_agent_turns(
                 "server_metrics_delta": metric_values,
                 "server_stats": server_stats,
                 "completion_token_fallback_debug": completion["completion_token_fallback_debug"],
-                "completion_token_fallback_debug_path": str(completion_token_debug_path) if completion["completion_token_fallback_debug"] is not None else None,
+                "completion_token_fallback_debug_path": str(completion_token_debug_path)
+                if completion["completion_token_fallback_debug"] is not None
+                else None,
                 "reasoning_only_truncated": completion["reasoning_only_truncated"],
                 "empty_stream_bug": completion["empty_stream_bug"],
             }
@@ -1676,7 +1821,10 @@ def _record_agent_turns(
                 messages.append(_assistant_message_from_completion(completion))
                 messages.extend(resolution["tool_messages"])
                 remaining_results = resolution["remaining_results"]
-                _write_json(response_base / f"turn_{turn_index:02d}_continued_messages.json", messages)
+                _write_json(
+                    response_base / f"turn_{turn_index:02d}_continued_messages.json",
+                    messages,
+                )
                 continue
 
             final_answer = completion["content"]
@@ -1688,7 +1836,9 @@ def _record_agent_turns(
             tegra.stop()
 
     telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    )
     return {
         "scenario_id": scenario["id"],
         "use_case_id": scenario["use_case_id"],
@@ -1720,7 +1870,9 @@ def _record_agent_turns(
         "prompt_path": str(run_paths.prompts_dir / prompt_name),
         "initial_prompt_token_estimate": prompt_tokens,
         "initial_prompt_token_debug": prompt_token_debug,
-        "initial_prompt_token_debug_path": str(initial_prompt_token_debug_path) if prompt_token_debug is not None else None,
+        "initial_prompt_token_debug_path": str(initial_prompt_token_debug_path)
+        if prompt_token_debug is not None
+        else None,
         "turns": turns,
         "final_answer": final_answer,
         "total_latency_ms": total_latency_ms,
@@ -1746,16 +1898,24 @@ def _record_conversation_turns(
     repeat_index: int,
     with_tegrastats: bool,
 ) -> dict[str, Any]:
-    response_base = run_paths.responses_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    response_base = (
+        run_paths.responses_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}"
+    )
     response_base.mkdir(parents=True, exist_ok=True)
 
-    telemetry_path = run_paths.telemetry_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    telemetry_path = (
+        run_paths.telemetry_dir
+        / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}.log"
+    )
     tegra = TegraStatsSession(telemetry_path)
     tegra_active = False
     if with_tegrastats:
         tegra_active = tegra.start()
 
-    conversation_history: list[dict[str, Any]] = [{"role": "system", "content": _build_system_message(scenario)}]
+    conversation_history: list[dict[str, Any]] = [
+        {"role": "system", "content": _build_system_message(scenario)}
+    ]
     turns: list[dict[str, Any]] = []
     total_latency_ms = 0.0
     final_answer = ""
@@ -1787,10 +1947,14 @@ def _record_conversation_turns(
             if initial_prompt_tokens is None:
                 initial_prompt_tokens = prompt_meta["prompt_tokens"]
                 initial_prompt_token_debug = prompt_meta["prompt_token_debug"]
-                initial_prompt_token_debug_path = response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
+                initial_prompt_token_debug_path = (
+                    response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
+                )
                 original_prompt_tokens = prompt_meta["original_prompt_tokens"]
                 effective_max_context_tokens = prompt_meta["effective_max_context_tokens"]
-                scenario_declared_max_context_tokens = prompt_meta["scenario_declared_max_context_tokens"]
+                scenario_declared_max_context_tokens = prompt_meta[
+                    "scenario_declared_max_context_tokens"
+                ]
             session_prompt_truncated = session_prompt_truncated or prompt_meta["prompt_truncated"]
             for rel_path in prompt_meta["truncated_context_files"]:
                 if rel_path not in session_truncated_context_files:
@@ -1801,7 +1965,8 @@ def _record_conversation_turns(
 
             metrics_before = scrape_metrics(base_url, api_key)
             _write_metrics_snapshot(
-                run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__before.prom",
+                run_paths.metrics_dir
+                / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__before.prom",
                 metrics_before,
             )
 
@@ -1818,43 +1983,72 @@ def _record_conversation_turns(
 
             metrics_after = scrape_metrics(base_url, api_key)
             _write_metrics_snapshot(
-                run_paths.metrics_dir / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__after.prom",
+                run_paths.metrics_dir
+                / f"{scenario['id']}__thinking_{str(thinking_enabled).lower()}__repeat_{repeat_index:02d}__turn_{turn_index:02d}__after.prom",
                 metrics_after,
             )
             metric_values = metrics_delta(metrics_before, metrics_after)
             server_stats = _derive_server_stats(completion, metric_values)
-            effective_ttft_ms = completion["ttft_ms"] if completion["ttft_ms"] is not None else server_stats.get("server_ttft_ms")
+            effective_ttft_ms = (
+                completion["ttft_ms"]
+                if completion["ttft_ms"] is not None
+                else server_stats.get("server_ttft_ms")
+            )
 
             events_path = response_base / f"turn_{turn_index:02d}_events.sse"
             event_timeline_path = response_base / f"turn_{turn_index:02d}_events_timeline.jsonl"
-            completion_token_debug_path = response_base / f"turn_{turn_index:02d}_completion_token_fallback_debug.json"
+            completion_token_debug_path = (
+                response_base / f"turn_{turn_index:02d}_completion_token_fallback_debug.json"
+            )
             request_payload_path = response_base / f"turn_{turn_index:02d}_request_payload.json"
-            prompt_token_debug_path = response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
-            _write_text(response_base / f"turn_{turn_index:02d}_response.txt", completion["content"])
-            _write_text(response_base / f"turn_{turn_index:02d}_reasoning.txt", completion["reasoning"])
-            _write_json(response_base / f"turn_{turn_index:02d}_tool_calls.json", completion["tool_calls"])
+            prompt_token_debug_path = (
+                response_base / f"turn_{turn_index:02d}_prompt_token_debug.json"
+            )
+            _write_text(
+                response_base / f"turn_{turn_index:02d}_response.txt",
+                completion["content"],
+            )
+            _write_text(
+                response_base / f"turn_{turn_index:02d}_reasoning.txt",
+                completion["reasoning"],
+            )
+            _write_json(
+                response_base / f"turn_{turn_index:02d}_tool_calls.json",
+                completion["tool_calls"],
+            )
             _write_text(events_path, "\n".join(completion["raw_events"]))
-            _write_text(event_timeline_path, "\n".join(json.dumps(item) for item in completion["raw_event_records"]))
+            _write_text(
+                event_timeline_path,
+                "\n".join(json.dumps(item) for item in completion["raw_event_records"]),
+            )
             _write_json(request_payload_path, completion["request_payload"])
             if prompt_meta["prompt_token_debug"] is not None:
                 _write_json(prompt_token_debug_path, prompt_meta["prompt_token_debug"])
             if completion["completion_token_fallback_debug"] is not None:
-                _write_json(completion_token_debug_path, completion["completion_token_fallback_debug"])
+                _write_json(
+                    completion_token_debug_path,
+                    completion["completion_token_fallback_debug"],
+                )
 
             turn_record = {
                 "turn_index": turn_index,
                 "task": turn["task"],
                 "turn_prompt_path": str(run_paths.prompts_dir / turn_prompt_name),
                 "context_files": turn.get("context_files") or scenario["context_files"],
-                "response_requirements": turn.get("response_requirements") or scenario["response_requirements"],
+                "response_requirements": turn.get("response_requirements")
+                or scenario["response_requirements"],
                 "prompt_token_estimate": prompt_meta["prompt_tokens"],
                 "prompt_token_debug": prompt_meta["prompt_token_debug"],
-                "prompt_token_debug_path": str(prompt_token_debug_path) if prompt_meta["prompt_token_debug"] is not None else None,
+                "prompt_token_debug_path": str(prompt_token_debug_path)
+                if prompt_meta["prompt_token_debug"] is not None
+                else None,
                 "prompt_truncated": prompt_meta["prompt_truncated"],
                 "latency_ms": completion["latency_ms"],
                 "ttft_ms": completion["ttft_ms"],
                 "ttft_ms_effective": effective_ttft_ms,
-                "ttft_source": "client_stream" if completion["ttft_ms"] is not None else ("server_metrics" if effective_ttft_ms is not None else None),
+                "ttft_source": "client_stream"
+                if completion["ttft_ms"] is not None
+                else ("server_metrics" if effective_ttft_ms is not None else None),
                 "end_to_end_tokens_per_second": completion["end_to_end_tokens_per_second"],
                 "usage": completion["usage"],
                 "finish_reason": completion["finish_reason"],
@@ -1875,7 +2069,9 @@ def _record_conversation_turns(
                 "server_metrics_delta": metric_values,
                 "server_stats": server_stats,
                 "completion_token_fallback_debug": completion["completion_token_fallback_debug"],
-                "completion_token_fallback_debug_path": str(completion_token_debug_path) if completion["completion_token_fallback_debug"] is not None else None,
+                "completion_token_fallback_debug_path": str(completion_token_debug_path)
+                if completion["completion_token_fallback_debug"] is not None
+                else None,
                 "reasoning_only_truncated": completion["reasoning_only_truncated"],
                 "empty_stream_bug": completion["empty_stream_bug"],
             }
@@ -1883,9 +2079,14 @@ def _record_conversation_turns(
             total_latency_ms += completion["latency_ms"]
             final_answer = completion["content"]
 
-            conversation_history.append({"role": "user", "content": prompt_meta["messages"][-1]["content"]})
+            conversation_history.append(
+                {"role": "user", "content": prompt_meta["messages"][-1]["content"]}
+            )
             conversation_history.append(_assistant_message_from_completion(completion))
-            _write_json(response_base / f"turn_{turn_index:02d}_continued_messages.json", conversation_history)
+            _write_json(
+                response_base / f"turn_{turn_index:02d}_continued_messages.json",
+                conversation_history,
+            )
 
             if completion["reasoning_only_truncated"]:
                 status = "reasoning_only_truncated"
@@ -1899,7 +2100,9 @@ def _record_conversation_turns(
             tegra.stop()
 
     telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(telemetry_path, tegra.interval_ms) if tegra_active else None
+    )
     return {
         "scenario_id": scenario["id"],
         "use_case_id": scenario["use_case_id"],
@@ -1931,7 +2134,9 @@ def _record_conversation_turns(
         "prompt_path": str(run_paths.prompts_dir / prompt_name),
         "initial_prompt_token_estimate": initial_prompt_tokens,
         "initial_prompt_token_debug": initial_prompt_token_debug,
-        "initial_prompt_token_debug_path": str(initial_prompt_token_debug_path) if initial_prompt_token_debug_path is not None and initial_prompt_token_debug is not None else None,
+        "initial_prompt_token_debug_path": str(initial_prompt_token_debug_path)
+        if initial_prompt_token_debug_path is not None and initial_prompt_token_debug is not None
+        else None,
         "turns": turns,
         "final_answer": final_answer,
         "total_latency_ms": total_latency_ms,
@@ -1974,15 +2179,27 @@ def _error_record(
         "generation_profile": scenario["generation_profile"],
         "seed": seed,
         "dry_run": False,
-        "max_context_tokens": prompt_meta.get("effective_max_context_tokens") if prompt_meta else None,
-        "scenario_declared_max_context_tokens": prompt_meta.get("scenario_declared_max_context_tokens") if prompt_meta else scenario.get("max_context_tokens"),
+        "max_context_tokens": prompt_meta.get("effective_max_context_tokens")
+        if prompt_meta
+        else None,
+        "scenario_declared_max_context_tokens": prompt_meta.get(
+            "scenario_declared_max_context_tokens"
+        )
+        if prompt_meta
+        else scenario.get("max_context_tokens"),
         "context_budget_valid": prompt_meta.get("context_budget_valid") if prompt_meta else None,
         "prompt_truncated": prompt_meta.get("prompt_truncated") if prompt_meta else False,
-        "original_prompt_token_estimate": prompt_meta.get("original_prompt_tokens") if prompt_meta else None,
-        "truncated_context_files": prompt_meta.get("truncated_context_files") if prompt_meta else [],
+        "original_prompt_token_estimate": prompt_meta.get("original_prompt_tokens")
+        if prompt_meta
+        else None,
+        "truncated_context_files": prompt_meta.get("truncated_context_files")
+        if prompt_meta
+        else [],
         "prompt_path": prompt_path,
         "initial_prompt_token_estimate": prompt_meta.get("prompt_tokens") if prompt_meta else None,
-        "initial_prompt_token_debug": prompt_meta.get("prompt_token_debug") if prompt_meta else None,
+        "initial_prompt_token_debug": prompt_meta.get("prompt_token_debug")
+        if prompt_meta
+        else None,
         "initial_prompt_token_debug_path": None,
         "turns": [],
         "final_answer": None,
@@ -2012,10 +2229,20 @@ def _build_task_list(
             continue
         if scenario_ids and scenario["id"] not in scenario_ids:
             continue
-        scenario_repeats = int(scenario.get("repeat_count_override", repeats)) if respect_repeat_count_overrides else repeats
+        scenario_repeats = (
+            int(scenario.get("repeat_count_override", repeats))
+            if respect_repeat_count_overrides
+            else repeats
+        )
         for thinking_enabled in think_values:
             for repeat_index in range(1, scenario_repeats + 1):
-                tasks.append({"scenario": scenario, "thinking_enabled": thinking_enabled, "repeat_index": repeat_index})
+                tasks.append(
+                    {
+                        "scenario": scenario,
+                        "thinking_enabled": thinking_enabled,
+                        "repeat_index": repeat_index,
+                    }
+                )
     rng = random.Random(shuffle_seed)
     rng.shuffle(tasks)
     return tasks
@@ -2112,7 +2339,9 @@ def run_suite(
                     context_map=context_map,
                     thinking_enabled=task["thinking_enabled"],
                     generation_profile=profiles[scenario["generation_profile"]],
-                    conversation_history=[{"role": "system", "content": _build_system_message(scenario)}],
+                    conversation_history=[
+                        {"role": "system", "content": _build_system_message(scenario)}
+                    ],
                     turn=scenario["conversation_turns"][0],
                     turn_index=1,
                 )
@@ -2167,7 +2396,9 @@ def run_suite(
         lambda metadata: metadata.update(
             {
                 "warmup_results": warmup_results,
-                "warmup_error_count": sum(1 for item in warmup_results if item.get("status") == "error"),
+                "warmup_error_count": sum(
+                    1 for item in warmup_results if item.get("status") == "error"
+                ),
             }
         ),
     )
@@ -2216,7 +2447,9 @@ def run_suite(
                             "thinking_enabled": thinking_enabled,
                             "dry_run": True,
                             "max_context_tokens": backend_max_context_tokens,
-                            "scenario_declared_max_context_tokens": scenario.get("max_context_tokens"),
+                            "scenario_declared_max_context_tokens": scenario.get(
+                                "max_context_tokens"
+                            ),
                             "context_budget_valid": None,
                             "prompt_truncated": False,
                             "truncated_context_files": [],
@@ -2317,7 +2550,9 @@ def run_suite(
                     original_prompt_tokens=prompt_meta["original_prompt_tokens"],
                     truncated_context_files=prompt_meta["truncated_context_files"],
                     effective_max_context_tokens=prompt_meta["effective_max_context_tokens"],
-                    scenario_declared_max_context_tokens=prompt_meta["scenario_declared_max_context_tokens"],
+                    scenario_declared_max_context_tokens=prompt_meta[
+                        "scenario_declared_max_context_tokens"
+                    ],
                     context_budget_valid=prompt_meta["context_budget_valid"],
                     thinking_enabled=thinking_enabled,
                     seed=scenario_seed,
@@ -2340,7 +2575,9 @@ def run_suite(
                     original_prompt_tokens=prompt_meta["original_prompt_tokens"],
                     truncated_context_files=prompt_meta["truncated_context_files"],
                     effective_max_context_tokens=prompt_meta["effective_max_context_tokens"],
-                    scenario_declared_max_context_tokens=prompt_meta["scenario_declared_max_context_tokens"],
+                    scenario_declared_max_context_tokens=prompt_meta[
+                        "scenario_declared_max_context_tokens"
+                    ],
                     context_budget_valid=prompt_meta["context_budget_valid"],
                     thinking_enabled=thinking_enabled,
                     seed=scenario_seed,

@@ -14,7 +14,9 @@ from gemma_vllm_benchmark.systems import run_systems_suite
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend-config", required=True, type=Path)
-    parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "systems_runs")
+    parser.add_argument(
+        "--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "systems_runs"
+    )
     parser.add_argument("--manifest", type=Path, default=PROJECT_ROOT / "systems" / "manifest.yaml")
     parser.add_argument("--experiment", action="append")
     parser.add_argument("--dry-run", action="store_true")

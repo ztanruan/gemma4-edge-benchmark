@@ -1,0 +1,53 @@
+[project]
+name = "gemma-vllm-benchmark"
+version = "1.0.0"
+description = "Reproducible vLLM benchmark harness for Gemma 4 26B-A4B on NVIDIA Jetson AGX Thor"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Jin Tan Ruan" }]
+keywords = ["gemma", "vllm", "jetson", "edge-ai", "benchmark", "llm-evaluation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Benchmark",
+]
+# The harness talks to a vLLM OpenAI-compatible endpoint over plain HTTP and
+# reads YAML manifests/configs — deliberately no heavyweight ML dependencies.
+dependencies = [
+    "PyYAML>=6.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/ztanruan/gemma4-edge-benchmark"
+Repository = "https://github.com/ztanruan/gemma4-edge-benchmark"
+Issues = "https://github.com/ztanruan/gemma4-edge-benchmark/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gemma_vllm_benchmark"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# pyflakes, pycodestyle, isort, pyupgrade, bugbear, comprehensions
+select = ["E", "F", "I", "UP", "B", "C4"]
+ignore = ["E501"]  # line length handled by formatter; long strings are intentional
+
+[tool.ruff.lint.per-file-ignores]
+# Entry-point scripts insert src/ onto sys.path before importing the package
+# so they run without an editable install.
+"scripts/*" = ["E402"]

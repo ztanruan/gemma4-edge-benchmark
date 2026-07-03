@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 
 def main() -> None:
@@ -47,7 +48,10 @@ def main() -> None:
             (packets_dir / output_name).write_text(json.dumps(packet, indent=2), encoding="utf-8")
 
             if record.get("review_scope") == "across_repeats":
-                group_key = (record["scenario_id"], str(record["thinking_enabled"]).lower())
+                group_key = (
+                    record["scenario_id"],
+                    str(record["thinking_enabled"]).lower(),
+                )
                 grouped = grouped_packets.setdefault(
                     group_key,
                     {

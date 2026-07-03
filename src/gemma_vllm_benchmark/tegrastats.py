@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-
 RAM_RE = re.compile(r"RAM (\d+)/(\d+)([KMG]B)")
 CPU_RE = re.compile(r"CPU \[([^\]]+)\]")
 CPU_UTIL_RE = re.compile(r"(\d+)%@")
@@ -84,21 +83,27 @@ def summarize_tegrastats_log(path: Path) -> dict[str, Any] | None:
         return round(max(values), 3)
 
     temperature_keys = sorted(
-        {
-            temp_name
-            for sample in samples
-            for temp_name in sample.get("temperatures_c", {})
-        }
+        {temp_name for sample in samples for temp_name in sample.get("temperatures_c", {})}
     )
     temperature_summary = {
         temp_name: {
             "avg_c": round(
-                sum(sample["temperatures_c"][temp_name] for sample in samples if temp_name in sample.get("temperatures_c", {}))
-                / len([sample for sample in samples if temp_name in sample.get("temperatures_c", {})]),
+                sum(
+                    sample["temperatures_c"][temp_name]
+                    for sample in samples
+                    if temp_name in sample.get("temperatures_c", {})
+                )
+                / len(
+                    [sample for sample in samples if temp_name in sample.get("temperatures_c", {})]
+                ),
                 3,
             ),
             "max_c": round(
-                max(sample["temperatures_c"][temp_name] for sample in samples if temp_name in sample.get("temperatures_c", {})),
+                max(
+                    sample["temperatures_c"][temp_name]
+                    for sample in samples
+                    if temp_name in sample.get("temperatures_c", {})
+                ),
                 3,
             ),
         }

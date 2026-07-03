@@ -10,7 +10,6 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from gemma_vllm_benchmark.generate_assets import generate
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

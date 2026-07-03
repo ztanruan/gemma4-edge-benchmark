@@ -48,10 +48,13 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "target_prompt_tokens": record.get("target_prompt_tokens"),
         "actual_prompt_tokens": record.get("actual_prompt_tokens"),
         "prompt_token_debug_ok": (record.get("prompt_token_debug") or {}).get("ok"),
-        "prompt_token_debug_status_code": (record.get("prompt_token_debug") or {}).get("status_code"),
+        "prompt_token_debug_status_code": (record.get("prompt_token_debug") or {}).get(
+            "status_code"
+        ),
         "prompt_token_debug_count": (record.get("prompt_token_debug") or {}).get("count"),
         "prompt_token_debug_error_type": (record.get("prompt_token_debug") or {}).get("error_type"),
-        "prompt_token_debug_path": record.get("prompt_token_debug_path") or ((record.get("artifact_paths") or {}).get("prompt_token_debug_path")),
+        "prompt_token_debug_path": record.get("prompt_token_debug_path")
+        or ((record.get("artifact_paths") or {}).get("prompt_token_debug_path")),
         "max_tokens": (record.get("generation") or {}).get("max_tokens"),
         "latency_ms": record.get("latency_ms"),
         "ttft_ms": record.get("ttft_ms"),
@@ -185,7 +188,9 @@ def _aggregate(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             aggregate[f"{field}_median"] = round(statistics.median(values), 3)
             aggregate[f"{field}_min"] = round(min(values), 3)
             aggregate[f"{field}_max"] = round(max(values), 3)
-            aggregate[f"{field}_stdev"] = round(statistics.stdev(values), 3) if len(values) > 1 else 0.0
+            aggregate[f"{field}_stdev"] = (
+                round(statistics.stdev(values), 3) if len(values) > 1 else 0.0
+            )
         aggregate_rows.append(aggregate)
     return aggregate_rows
 

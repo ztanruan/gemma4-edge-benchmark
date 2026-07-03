@@ -10,7 +10,6 @@ from typing import Any
 
 from PIL import Image
 
-
 CIFAR10_LABELS = [
     "airplane",
     "automobile",
@@ -107,7 +106,9 @@ def _write_multilingual_ocr_use_case_doc(
     available_counts: dict[str, int],
     staged_per_language: int,
 ) -> str:
-    counts_lines = "\n".join(f"- `{code}`: {available_counts.get(code, 0)} available" for code in language_codes)
+    counts_lines = "\n".join(
+        f"- `{code}`: {available_counts.get(code, 0)} available" for code in language_codes
+    )
     return f"""# Multilingual Image Text Extraction
 
 ## Summary
@@ -191,7 +192,9 @@ def _clock_time_samples_per_label_for_tier(image_tier: str) -> int:
         ) from exc
 
 
-def _preferred_dataset_dir(project_root: Path, dirname: str, archive_name: str) -> tuple[Path | None, list[Path]]:
+def _preferred_dataset_dir(
+    project_root: Path, dirname: str, archive_name: str
+) -> tuple[Path | None, list[Path]]:
     candidates = [
         project_root / "data" / "source_datasets" / dirname,
         Path.home() / "Downloads" / dirname,
@@ -261,9 +264,7 @@ def _image_classification_scenario(
     dataset_name: str,
     source_reference: str,
 ) -> dict[str, Any]:
-    description = (
-        f"Tests closed-set image classification on a staged {dataset_name} sample using an explicit allowed label set."
-    )
+    description = f"Tests closed-set image classification on a staged {dataset_name} sample using an explicit allowed label set."
     return {
         "id": scenario_id,
         "title": title,
@@ -463,8 +464,14 @@ def _clock_time_reading_scenario(
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "predicted_label": {"type": "string", "enum": CLOCK_TIME_LABELS},
-                        "confidence_band": {"type": "string", "enum": ["high", "medium", "low"]},
+                        "predicted_label": {
+                            "type": "string",
+                            "enum": CLOCK_TIME_LABELS,
+                        },
+                        "confidence_band": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                        },
                         "brief_reason": {"type": "string"},
                     },
                     "required": ["predicted_label", "confidence_band", "brief_reason"],
@@ -506,7 +513,9 @@ def _clock_time_reading_scenario(
     }
 
 
-def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_TIER) -> dict[str, Any]:
+def stage_image_benchmarks(
+    project_root: Path, image_tier: str = DEFAULT_IMAGE_TIER
+) -> dict[str, Any]:
     samples_per_class = _samples_per_class_for_tier(image_tier)
     clock_samples_per_label = _clock_time_samples_per_label_for_tier(image_tier)
     image_root = project_root / "data" / "image_corpora"
@@ -519,7 +528,9 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
     _reset_dir(multilingual_root)
     _reset_dir(clock_root)
 
-    cifar_dir, cifar_candidates = _preferred_dataset_dir(project_root, "cifar-10-batches-py", "cifar-10-python.tar.gz")
+    cifar_dir, cifar_candidates = _preferred_dataset_dir(
+        project_root, "cifar-10-batches-py", "cifar-10-python.tar.gz"
+    )
     if cifar_dir is None:
         raise FileNotFoundError(
             "Missing CIFAR-10 source directory. Checked: "
@@ -527,7 +538,9 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
             + ". Place the extracted CIFAR-10 Python dataset under "
             + f"{project_root / 'data' / 'source_datasets' / 'cifar-10-batches-py'}."
         )
-    caltech_dir, caltech_candidates = _preferred_dataset_dir(project_root, "256_ObjectCategories", "256_ObjectCategories.tar")
+    caltech_dir, caltech_candidates = _preferred_dataset_dir(
+        project_root, "256_ObjectCategories", "256_ObjectCategories.tar"
+    )
     if caltech_dir is None:
         raise FileNotFoundError(
             "Missing Caltech 256 source directory. Checked: "
@@ -575,7 +588,8 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
             "clock_time_samples_per_label": clock_samples_per_label,
             "cifar_total_images": len(CIFAR10_LABELS) * samples_per_class,
             "caltech_total_images": len(CALTECH256_SELECTED_CLASSES) * samples_per_class,
-            "multilingual_image_text_total_images": len(MULTILINGUAL_IMAGE_TEXT_LANGUAGE_CODES) * samples_per_class,
+            "multilingual_image_text_total_images": len(MULTILINGUAL_IMAGE_TEXT_LANGUAGE_CODES)
+            * samples_per_class,
             "clock_time_total_images": len(CLOCK_TIME_LABELS) * clock_samples_per_label,
             "clock_time_source_split": "test",
         },
@@ -587,7 +601,10 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
     scenarios: list[dict[str, Any]] = []
 
     meta = _load_cifar_batch(cifar_dir / "batches.meta")
-    label_names = [name.decode("utf-8") if isinstance(name, bytes) else str(name) for name in meta[b"label_names"]]
+    label_names = [
+        name.decode("utf-8") if isinstance(name, bytes) else str(name)
+        for name in meta[b"label_names"]
+    ]
     test_batch = _load_cifar_batch(cifar_dir / "test_batch")
     test_data = test_batch[b"data"]
     test_labels = test_batch[b"labels"]
@@ -596,9 +613,8 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
         selected_by_label.setdefault(label_idx, [])
         if len(selected_by_label[label_idx]) < samples_per_class:
             selected_by_label[label_idx].append(index)
-        if (
-            len(selected_by_label) == len(label_names)
-            and all(len(indices) >= samples_per_class for indices in selected_by_label.values())
+        if len(selected_by_label) == len(label_names) and all(
+            len(indices) >= samples_per_class for indices in selected_by_label.values()
         ):
             break
 
@@ -645,7 +661,11 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
         if not source_dir.exists():
             raise FileNotFoundError(f"Missing expected Caltech 256 class directory: {source_dir}")
         source_images = sorted(
-            [path for path in source_dir.iterdir() if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png"}]
+            [
+                path
+                for path in source_dir.iterdir()
+                if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png"}
+            ]
         )
         if len(source_images) < samples_per_class:
             raise ValueError(
@@ -700,13 +720,17 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
         language_code: len(records_by_language.get(language_code, []))
         for language_code in MULTILINGUAL_IMAGE_TEXT_LANGUAGE_CODES
     }
-    metadata["staging_parameters"]["multilingual_image_text_available_language_counts"] = available_language_counts
+    metadata["staging_parameters"]["multilingual_image_text_available_language_counts"] = (
+        available_language_counts
+    )
     metadata["staging_parameters"]["multilingual_image_text_staged_language_counts"] = {
         language_code: min(samples_per_class, available_language_counts.get(language_code, 0))
         for language_code in MULTILINGUAL_IMAGE_TEXT_LANGUAGE_CODES
     }
     for language_code in MULTILINGUAL_IMAGE_TEXT_LANGUAGE_CODES:
-        language_records = sorted(records_by_language.get(language_code, []), key=lambda item: item["id"])
+        language_records = sorted(
+            records_by_language.get(language_code, []), key=lambda item: item["id"]
+        )
         if len(language_records) < samples_per_class:
             raise ValueError(
                 f"Unable to collect {samples_per_class} multilingual image-text samples for language {language_code}; "
@@ -757,10 +781,13 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
         if row["data set"] != "test":
             continue
         rows_by_label.setdefault(row["labels"], []).append(row)
-    available_clock_counts = {label: len(rows_by_label.get(label, [])) for label in CLOCK_TIME_LABELS}
+    available_clock_counts = {
+        label: len(rows_by_label.get(label, [])) for label in CLOCK_TIME_LABELS
+    }
     metadata["staging_parameters"]["clock_time_available_label_counts"] = available_clock_counts
     metadata["staging_parameters"]["clock_time_staged_label_counts"] = {
-        label: min(clock_samples_per_label, available_clock_counts.get(label, 0)) for label in CLOCK_TIME_LABELS
+        label: min(clock_samples_per_label, available_clock_counts.get(label, 0))
+        for label in CLOCK_TIME_LABELS
     }
     for label in CLOCK_TIME_LABELS:
         label_rows = sorted(rows_by_label.get(label, []), key=lambda item: item["filepaths"])
@@ -773,7 +800,11 @@ def stage_image_benchmarks(project_root: Path, image_tier: str = DEFAULT_IMAGE_T
             source_image = clock_dir / row["filepaths"]
             if not source_image.exists():
                 raise FileNotFoundError(f"Missing clock source image: {source_image}")
-            output_path = clock_root / label / f"{label}_sample_{sample_rank:02d}{source_image.suffix.lower()}"
+            output_path = (
+                clock_root
+                / label
+                / f"{label}_sample_{sample_rank:02d}{source_image.suffix.lower()}"
+            )
             output_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_image, output_path)
             rel_path = output_path.relative_to(project_root).as_posix()

@@ -68,34 +68,101 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Elena Park",
         unsupported_topic="whether the field team can downgrade the VFD firmware from 5.8 to 5.6 during operation",
         unsupported_reason="the provided materials cover pump recovery steps but do not document VFD firmware rollback policy",
-        extraction_fields=["asset_id", "pressure_before_bar", "pressure_after_bar", "symptom", "first_action", "escalation_threshold"],
+        extraction_fields=[
+            "asset_id",
+            "pressure_before_bar",
+            "pressure_after_bar",
+            "symptom",
+            "first_action",
+            "escalation_threshold",
+        ],
         qa_question="Based only on the provided materials, what should the operator inspect first, what should be avoided, and when should the pump be escalated?",
         long_context_task="Use the manual, SOP, notes, and revision appendix to identify the most likely cause of the issue and propose the minimum safe recovery plan.",
         summary_request="Create a shift-handoff summary with sections Situation, Actions Taken, Risks, and Next Shift Watch Items.",
         extraction_request="Extract the key incident fields into JSON only. Use null for anything not explicitly stated.",
         tool_single_request="Check whether the replacement strainer kit is available locally and respond with the next recommended action for the operator.",
         tool_multi_request="Check local part availability, create the local maintenance ticket, and tell the operator which technician should be contacted next.",
-        tool_single_result={"item_code": "STR-KIT-447", "availability": "2 kits available", "location": "maintenance cage B14"},
+        tool_single_result={
+            "item_code": "STR-KIT-447",
+            "availability": "2 kits available",
+            "location": "maintenance cage B14",
+        },
         tool_multi_results=[
-            {"name": "lookup_local_part_stock", "response": {"item_code": "STR-KIT-447", "availability": "2 kits available", "location": "maintenance cage B14"}},
-            {"name": "create_local_maintenance_ticket", "response": {"ticket_id": "NR-4821", "priority": "high", "assigned_group": "rotating-equipment"}},
-            {"name": "get_on_shift_technician", "response": {"role": "rotating equipment technician", "name": "Elena Park", "radio_channel": "Ops-3"}},
+            {
+                "name": "lookup_local_part_stock",
+                "response": {
+                    "item_code": "STR-KIT-447",
+                    "availability": "2 kits available",
+                    "location": "maintenance cage B14",
+                },
+            },
+            {
+                "name": "create_local_maintenance_ticket",
+                "response": {
+                    "ticket_id": "NR-4821",
+                    "priority": "high",
+                    "assigned_group": "rotating-equipment",
+                },
+            },
+            {
+                "name": "get_on_shift_technician",
+                "response": {
+                    "role": "rotating equipment technician",
+                    "name": "Elena Park",
+                    "radio_channel": "Ops-3",
+                },
+            },
         ],
         tools=[
             ToolTemplate(
                 name="lookup_local_part_stock",
                 description="Looks up the availability of a local maintenance part in the site storeroom.",
-                parameters={"type": "object", "properties": {"item_code": {"type": "string", "description": "Maintenance part number"}},"required": ["item_code"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "item_code": {
+                            "type": "string",
+                            "description": "Maintenance part number",
+                        }
+                    },
+                    "required": ["item_code"],
+                },
             ),
             ToolTemplate(
                 name="create_local_maintenance_ticket",
                 description="Creates a local maintenance ticket in the plant CMMS.",
-                parameters={"type": "object", "properties": {"asset_id": {"type": "string", "description": "Plant asset identifier"}, "priority": {"type": "string", "description": "Ticket priority"}, "summary": {"type": "string", "description": "Short maintenance summary"}},"required": ["asset_id", "priority", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "asset_id": {
+                            "type": "string",
+                            "description": "Plant asset identifier",
+                        },
+                        "priority": {
+                            "type": "string",
+                            "description": "Ticket priority",
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Short maintenance summary",
+                        },
+                    },
+                    "required": ["asset_id", "priority", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_on_shift_technician",
                 description="Returns the current on-shift technician for a given skill area.",
-                parameters={"type": "object", "properties": {"skill": {"type": "string", "description": "Operational skill or trade specialty"}},"required": ["skill"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "skill": {
+                            "type": "string",
+                            "description": "Operational skill or trade specialty",
+                        }
+                    },
+                    "required": ["skill"],
+                },
             ),
         ],
     ),
@@ -123,40 +190,116 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Marco Diaz",
         unsupported_topic="whether firmware 3.14.2 should be fully rolled back to 3.13.9 on-site without engineering approval",
         unsupported_reason="the context includes profile recovery and bus checks but no engineering rollback authorization guidance",
-        extraction_fields=["site_id", "controller_id", "firmware_build", "symptom", "recommended_check", "escalation_condition"],
+        extraction_fields=[
+            "site_id",
+            "controller_id",
+            "firmware_build",
+            "symptom",
+            "recommended_check",
+            "escalation_condition",
+        ],
         qa_question="Using only the provided documents, what should the technician check first, what should not be replaced yet, and when should the issue be escalated?",
         long_context_task="Synthesize the service bulletin, site history, dispatch notes, and revision appendix into a concise recovery plan for the field technician.",
         summary_request="Produce a customer-ready service visit brief with sections Observed Symptoms, Immediate Checks, Risks, and Next Actions.",
         extraction_request="Return JSON only with the incident fields needed for the field-service system.",
         tool_single_request="Check whether the replacement RS-485 cable is in local stock and tell the technician the next best action.",
         tool_multi_request="Check service history, check local part ETA or stock, open the visit brief, and tell the technician who to contact if the issue persists.",
-        tool_single_result={"item_code": "CBL-RS485-3M", "availability": "1 cable available", "location": "technician van bin E2"},
+        tool_single_result={
+            "item_code": "CBL-RS485-3M",
+            "availability": "1 cable available",
+            "location": "technician van bin E2",
+        },
         tool_multi_results=[
-            {"name": "get_service_history", "response": {"site_id": "MCS-D4", "last_visit": "2026-03-11", "note": "site profile drift fixed after controller replacement"}},
-            {"name": "lookup_part_eta", "response": {"part_number": "CBL-RS485-3M", "status": "available in van stock", "eta_hours": 0}},
-            {"name": "create_visit_brief", "response": {"brief_id": "FS-2918", "priority": "medium", "owner": "dispatch-west"}},
-            {"name": "get_regional_service_lead", "response": {"name": "Marco Diaz", "phone": "555-0144"}},
+            {
+                "name": "get_service_history",
+                "response": {
+                    "site_id": "MCS-D4",
+                    "last_visit": "2026-03-11",
+                    "note": "site profile drift fixed after controller replacement",
+                },
+            },
+            {
+                "name": "lookup_part_eta",
+                "response": {
+                    "part_number": "CBL-RS485-3M",
+                    "status": "available in van stock",
+                    "eta_hours": 0,
+                },
+            },
+            {
+                "name": "create_visit_brief",
+                "response": {
+                    "brief_id": "FS-2918",
+                    "priority": "medium",
+                    "owner": "dispatch-west",
+                },
+            },
+            {
+                "name": "get_regional_service_lead",
+                "response": {"name": "Marco Diaz", "phone": "555-0144"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="get_service_history",
                 description="Returns recent field-service history for a site.",
-                parameters={"type": "object", "properties": {"site_id": {"type": "string", "description": "Service site identifier"}},"required": ["site_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "site_id": {
+                            "type": "string",
+                            "description": "Service site identifier",
+                        }
+                    },
+                    "required": ["site_id"],
+                },
             ),
             ToolTemplate(
                 name="lookup_part_eta",
                 description="Checks whether a field-service part is available locally or when it will arrive.",
-                parameters={"type": "object", "properties": {"part_number": {"type": "string", "description": "Service part number"}},"required": ["part_number"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "part_number": {
+                            "type": "string",
+                            "description": "Service part number",
+                        }
+                    },
+                    "required": ["part_number"],
+                },
             ),
             ToolTemplate(
                 name="create_visit_brief",
                 description="Creates a field-service visit brief for the dispatcher and technician.",
-                parameters={"type": "object", "properties": {"site_id": {"type": "string", "description": "Service site identifier"}, "priority": {"type": "string", "description": "Dispatch priority"}, "summary": {"type": "string", "description": "Visit summary"}},"required": ["site_id", "priority", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "site_id": {
+                            "type": "string",
+                            "description": "Service site identifier",
+                        },
+                        "priority": {
+                            "type": "string",
+                            "description": "Dispatch priority",
+                        },
+                        "summary": {"type": "string", "description": "Visit summary"},
+                    },
+                    "required": ["site_id", "priority", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_regional_service_lead",
                 description="Returns the regional service lead for a given territory.",
-                parameters={"type": "object", "properties": {"territory": {"type": "string", "description": "Regional service territory"}},"required": ["territory"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "territory": {
+                            "type": "string",
+                            "description": "Regional service territory",
+                        }
+                    },
+                    "required": ["territory"],
+                },
             ),
         ],
     ),
@@ -184,40 +327,123 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Rina Solis",
         unsupported_topic="whether the motor drive current limit can be raised by 10 percent as a temporary workaround",
         unsupported_reason="the materials explicitly discuss safe checks but provide no authorization for changing drive limits",
-        extraction_fields=["cell_id", "alarm_code", "asset_id", "recent_change", "safe_recovery_step", "escalation_trigger"],
+        extraction_fields=[
+            "cell_id",
+            "alarm_code",
+            "asset_id",
+            "recent_change",
+            "safe_recovery_step",
+            "escalation_trigger",
+        ],
         qa_question="What should maintenance inspect first, what unsafe shortcut must be avoided, and what event requires escalation?",
         long_context_task="Review the alarm guide, work instructions, line notes, and appendix to produce the safest minimum recovery path.",
         summary_request="Write a line-maintenance handoff note with sections Fault, Immediate Actions, Production Risk, and Follow-up.",
         extraction_request="Return a JSON object with the incident fields for the CMMS intake flow.",
         tool_single_request="Check whether the wrist harness is available locally and tell the operator the next best action.",
         tool_multi_request="Check the alarm snapshot, check spare availability, open a work order, and tell maintenance who should own the follow-up.",
-        tool_single_result={"item_code": "WH-22-HARNESS", "availability": "1 reserved", "location": "parts crib C07"},
+        tool_single_result={
+            "item_code": "WH-22-HARNESS",
+            "availability": "1 reserved",
+            "location": "parts crib C07",
+        },
         tool_multi_results=[
-            {"name": "get_alarm_snapshot", "response": {"asset_id": "PX-22", "alarm_code": "44", "current_peak_pct": 118, "cycle_state": "startup"}},
-            {"name": "check_spare_availability", "response": {"part_number": "WH-22-HARNESS", "availability": "1 reserved", "location": "parts crib C07"}},
-            {"name": "open_work_order", "response": {"work_order_id": "WO-7714", "priority": "urgent", "owner_group": "automation-maintenance"}},
-            {"name": "get_owner_contact", "response": {"role": "automation maintenance lead", "name": "Rina Solis"}},
+            {
+                "name": "get_alarm_snapshot",
+                "response": {
+                    "asset_id": "PX-22",
+                    "alarm_code": "44",
+                    "current_peak_pct": 118,
+                    "cycle_state": "startup",
+                },
+            },
+            {
+                "name": "check_spare_availability",
+                "response": {
+                    "part_number": "WH-22-HARNESS",
+                    "availability": "1 reserved",
+                    "location": "parts crib C07",
+                },
+            },
+            {
+                "name": "open_work_order",
+                "response": {
+                    "work_order_id": "WO-7714",
+                    "priority": "urgent",
+                    "owner_group": "automation-maintenance",
+                },
+            },
+            {
+                "name": "get_owner_contact",
+                "response": {
+                    "role": "automation maintenance lead",
+                    "name": "Rina Solis",
+                },
+            },
         ],
         tools=[
             ToolTemplate(
                 name="get_alarm_snapshot",
                 description="Returns the current alarm and telemetry snapshot for a production asset.",
-                parameters={"type": "object", "properties": {"asset_id": {"type": "string", "description": "Automation asset identifier"}},"required": ["asset_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "asset_id": {
+                            "type": "string",
+                            "description": "Automation asset identifier",
+                        }
+                    },
+                    "required": ["asset_id"],
+                },
             ),
             ToolTemplate(
                 name="check_spare_availability",
                 description="Looks up spare availability in the line-side parts crib.",
-                parameters={"type": "object", "properties": {"part_number": {"type": "string", "description": "Spare part number"}},"required": ["part_number"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "part_number": {
+                            "type": "string",
+                            "description": "Spare part number",
+                        }
+                    },
+                    "required": ["part_number"],
+                },
             ),
             ToolTemplate(
                 name="open_work_order",
                 description="Creates a maintenance work order.",
-                parameters={"type": "object", "properties": {"asset_id": {"type": "string", "description": "Asset identifier"}, "priority": {"type": "string", "description": "Work order priority"}, "summary": {"type": "string", "description": "Maintenance summary"}},"required": ["asset_id", "priority", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "asset_id": {
+                            "type": "string",
+                            "description": "Asset identifier",
+                        },
+                        "priority": {
+                            "type": "string",
+                            "description": "Work order priority",
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Maintenance summary",
+                        },
+                    },
+                    "required": ["asset_id", "priority", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_owner_contact",
                 description="Returns the designated follow-up owner for an asset class.",
-                parameters={"type": "object", "properties": {"team": {"type": "string", "description": "Owning team or craft"}},"required": ["team"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "team": {
+                            "type": "string",
+                            "description": "Owning team or craft",
+                        }
+                    },
+                    "required": ["team"],
+                },
             ),
         ],
     ),
@@ -245,40 +471,114 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Dana Wu",
         unsupported_topic="whether the customer can bypass SCIM and directly edit the tenant auth tables",
         unsupported_reason="the provided support docs describe supported recovery steps only and do not authorize direct table edits",
-        extraction_fields=["account_tier", "feature_area", "symptom", "required_check", "forbidden_action", "escalation_trigger"],
+        extraction_fields=[
+            "account_tier",
+            "feature_area",
+            "symptom",
+            "required_check",
+            "forbidden_action",
+            "escalation_trigger",
+        ],
         qa_question="Using only the support docs, what should support ask the customer to verify first, what should not be suggested, and when should the ticket be escalated?",
         long_context_task="Synthesize the KB, policy, case notes, and appendix into the best first response for a support engineer.",
         summary_request="Draft an internal support case summary with sections Problem, Verified Facts, Recommended Next Step, and Escalation Trigger.",
         extraction_request="Return JSON only with the case-routing fields.",
         tool_single_request="Check the customer account entitlements and respond with the best next support action.",
         tool_multi_request="Check account entitlements, check order or provisioning state, create the escalation if needed, and tell support who owns the next step.",
-        tool_single_result={"account_id": "AC-7781", "tier": "enterprise", "features": ["sso", "scim", "domain-alias"], "status": "active"},
+        tool_single_result={
+            "account_id": "AC-7781",
+            "tier": "enterprise",
+            "features": ["sso", "scim", "domain-alias"],
+            "status": "active",
+        },
         tool_multi_results=[
-            {"name": "get_account_entitlements", "response": {"account_id": "AC-7781", "tier": "enterprise", "features": ["sso", "scim", "domain-alias"]}},
-            {"name": "lookup_provisioning_status", "response": {"account_id": "AC-7781", "domain_verification": "pending recheck", "scim_secret_last_rotated": "2026-04-07"}},
-            {"name": "create_support_escalation", "response": {"case_id": "SUP-9042", "queue": "identity-escalations", "priority": "high"}},
-            {"name": "get_queue_owner", "response": {"role": "identity escalation manager", "name": "Dana Wu"}},
+            {
+                "name": "get_account_entitlements",
+                "response": {
+                    "account_id": "AC-7781",
+                    "tier": "enterprise",
+                    "features": ["sso", "scim", "domain-alias"],
+                },
+            },
+            {
+                "name": "lookup_provisioning_status",
+                "response": {
+                    "account_id": "AC-7781",
+                    "domain_verification": "pending recheck",
+                    "scim_secret_last_rotated": "2026-04-07",
+                },
+            },
+            {
+                "name": "create_support_escalation",
+                "response": {
+                    "case_id": "SUP-9042",
+                    "queue": "identity-escalations",
+                    "priority": "high",
+                },
+            },
+            {
+                "name": "get_queue_owner",
+                "response": {"role": "identity escalation manager", "name": "Dana Wu"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="get_account_entitlements",
                 description="Returns support entitlement and enabled-feature information for a customer account.",
-                parameters={"type": "object", "properties": {"account_id": {"type": "string", "description": "Customer account identifier"}},"required": ["account_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "account_id": {
+                            "type": "string",
+                            "description": "Customer account identifier",
+                        }
+                    },
+                    "required": ["account_id"],
+                },
             ),
             ToolTemplate(
                 name="lookup_provisioning_status",
                 description="Returns provisioning and domain verification state for a customer account.",
-                parameters={"type": "object", "properties": {"account_id": {"type": "string", "description": "Customer account identifier"}},"required": ["account_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "account_id": {
+                            "type": "string",
+                            "description": "Customer account identifier",
+                        }
+                    },
+                    "required": ["account_id"],
+                },
             ),
             ToolTemplate(
                 name="create_support_escalation",
                 description="Creates a support escalation case.",
-                parameters={"type": "object", "properties": {"account_id": {"type": "string", "description": "Customer account identifier"}, "priority": {"type": "string", "description": "Case priority"}, "summary": {"type": "string", "description": "Escalation summary"}},"required": ["account_id", "priority", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "account_id": {
+                            "type": "string",
+                            "description": "Customer account identifier",
+                        },
+                        "priority": {"type": "string", "description": "Case priority"},
+                        "summary": {
+                            "type": "string",
+                            "description": "Escalation summary",
+                        },
+                    },
+                    "required": ["account_id", "priority", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_queue_owner",
                 description="Returns the owner of a support escalation queue.",
-                parameters={"type": "object", "properties": {"queue": {"type": "string", "description": "Support queue name"}},"required": ["queue"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "queue": {"type": "string", "description": "Support queue name"}
+                    },
+                    "required": ["queue"],
+                },
             ),
         ],
     ),
@@ -306,34 +606,89 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Tasha Reed",
         unsupported_topic="whether finance will automatically write off the discrepancy if the wave ships late",
         unsupported_reason="the local operations materials describe replenishment and inventory handling only, not finance write-off policy",
-        extraction_fields=["wave_id", "sku", "forward_location", "reserve_location", "recommended_action", "escalation_trigger"],
+        extraction_fields=[
+            "wave_id",
+            "sku",
+            "forward_location",
+            "reserve_location",
+            "recommended_action",
+            "escalation_trigger",
+        ],
         qa_question="What should operations verify first, what shortcut should be avoided, and when should the shift lead be pulled in?",
         long_context_task="Use the SOP, exception guide, shift notes, and appendix to recommend the minimum safe recovery plan for the wave.",
         summary_request="Create a warehouse handoff note with sections Exception, Checks Completed, Remaining Risk, and Next Action.",
         extraction_request="Return JSON only with the inventory-exception fields.",
         tool_single_request="Check reserve inventory for the affected SKU and tell the associate the next best action.",
         tool_multi_request="Check reserve inventory, create a replenishment task, look up the shift lead, and tell operations how to proceed.",
-        tool_single_result={"sku": "SKU-A19-CASE", "available_units": 84, "location": "reserve rack R-14-03"},
+        tool_single_result={
+            "sku": "SKU-A19-CASE",
+            "available_units": 84,
+            "location": "reserve rack R-14-03",
+        },
         tool_multi_results=[
-            {"name": "lookup_inventory", "response": {"sku": "SKU-A19-CASE", "available_units": 84, "location": "reserve rack R-14-03"}},
-            {"name": "create_replenishment_task", "response": {"task_id": "REP-5510", "priority": "high", "destination": "B-17"}},
-            {"name": "get_shift_lead", "response": {"name": "Tasha Reed", "radio_channel": "WH-1"}},
+            {
+                "name": "lookup_inventory",
+                "response": {
+                    "sku": "SKU-A19-CASE",
+                    "available_units": 84,
+                    "location": "reserve rack R-14-03",
+                },
+            },
+            {
+                "name": "create_replenishment_task",
+                "response": {
+                    "task_id": "REP-5510",
+                    "priority": "high",
+                    "destination": "B-17",
+                },
+            },
+            {
+                "name": "get_shift_lead",
+                "response": {"name": "Tasha Reed", "radio_channel": "WH-1"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="lookup_inventory",
                 description="Returns local warehouse inventory for a SKU.",
-                parameters={"type": "object", "properties": {"sku": {"type": "string", "description": "Warehouse SKU identifier"}},"required": ["sku"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "sku": {
+                            "type": "string",
+                            "description": "Warehouse SKU identifier",
+                        }
+                    },
+                    "required": ["sku"],
+                },
             ),
             ToolTemplate(
                 name="create_replenishment_task",
                 description="Creates a replenishment task from reserve to a forward pick slot.",
-                parameters={"type": "object", "properties": {"sku": {"type": "string", "description": "Warehouse SKU identifier"}, "destination": {"type": "string", "description": "Forward pick slot"}, "priority": {"type": "string", "description": "Task priority"}},"required": ["sku", "destination", "priority"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "sku": {
+                            "type": "string",
+                            "description": "Warehouse SKU identifier",
+                        },
+                        "destination": {
+                            "type": "string",
+                            "description": "Forward pick slot",
+                        },
+                        "priority": {"type": "string", "description": "Task priority"},
+                    },
+                    "required": ["sku", "destination", "priority"],
+                },
             ),
             ToolTemplate(
                 name="get_shift_lead",
                 description="Returns the active warehouse shift lead.",
-                parameters={"type": "object", "properties": {"zone": {"type": "string", "description": "Warehouse zone"}},"required": ["zone"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"zone": {"type": "string", "description": "Warehouse zone"}},
+                    "required": ["zone"],
+                },
             ),
         ],
     ),
@@ -361,40 +716,114 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Omar Patel",
         unsupported_topic="whether the SOC should attribute the incident to a specific threat actor family immediately",
         unsupported_reason="the context supports triage and containment decisions but not confident actor attribution",
-        extraction_fields=["host", "alert_type", "user", "recommended_first_check", "containment_note", "escalation_trigger"],
+        extraction_fields=[
+            "host",
+            "alert_type",
+            "user",
+            "recommended_first_check",
+            "containment_note",
+            "escalation_trigger",
+        ],
         qa_question="According to the playbook and notes, what should the analyst check first, what must be preserved, and when should the incident escalate?",
         long_context_task="Use the playbook, alert notes, prior incident summary, and appendix to recommend the minimum safe triage path.",
         summary_request="Write a SOC handoff summary with sections Detection, Evidence, Immediate Actions, and Escalation Conditions.",
         extraction_request="Return JSON only with the incident-routing fields.",
         tool_single_request="Check the latest host findings and tell the analyst the next best action.",
         tool_multi_request="Check host findings, isolate the host, open the incident ticket, and tell the analyst who owns next coordination.",
-        tool_single_result={"host": "finance-laptop-227", "parent_process": "winword.exe", "network_hits": 3, "token_refresh": "anomalous"},
+        tool_single_result={
+            "host": "finance-laptop-227",
+            "parent_process": "winword.exe",
+            "network_hits": 3,
+            "token_refresh": "anomalous",
+        },
         tool_multi_results=[
-            {"name": "get_host_findings", "response": {"host": "finance-laptop-227", "parent_process": "winword.exe", "network_hits": 3, "token_refresh": "anomalous"}},
-            {"name": "isolate_host", "response": {"host": "finance-laptop-227", "status": "isolated", "timestamp": "2026-04-16T09:18:00Z"}},
-            {"name": "create_incident_ticket", "response": {"ticket_id": "IR-1182", "severity": "high", "queue": "soc-investigation"}},
-            {"name": "get_incident_commander", "response": {"name": "Omar Patel", "channel": "IR-WARROOM"}},
+            {
+                "name": "get_host_findings",
+                "response": {
+                    "host": "finance-laptop-227",
+                    "parent_process": "winword.exe",
+                    "network_hits": 3,
+                    "token_refresh": "anomalous",
+                },
+            },
+            {
+                "name": "isolate_host",
+                "response": {
+                    "host": "finance-laptop-227",
+                    "status": "isolated",
+                    "timestamp": "2026-04-16T09:18:00Z",
+                },
+            },
+            {
+                "name": "create_incident_ticket",
+                "response": {
+                    "ticket_id": "IR-1182",
+                    "severity": "high",
+                    "queue": "soc-investigation",
+                },
+            },
+            {
+                "name": "get_incident_commander",
+                "response": {"name": "Omar Patel", "channel": "IR-WARROOM"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="get_host_findings",
                 description="Returns the latest investigation findings for a host.",
-                parameters={"type": "object", "properties": {"host": {"type": "string", "description": "Host name"}},"required": ["host"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"host": {"type": "string", "description": "Host name"}},
+                    "required": ["host"],
+                },
             ),
             ToolTemplate(
                 name="isolate_host",
                 description="Isolates a host from the network.",
-                parameters={"type": "object", "properties": {"host": {"type": "string", "description": "Host name"}, "reason": {"type": "string", "description": "Reason for isolation"}},"required": ["host", "reason"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "host": {"type": "string", "description": "Host name"},
+                        "reason": {
+                            "type": "string",
+                            "description": "Reason for isolation",
+                        },
+                    },
+                    "required": ["host", "reason"],
+                },
             ),
             ToolTemplate(
                 name="create_incident_ticket",
                 description="Creates an incident response ticket.",
-                parameters={"type": "object", "properties": {"host": {"type": "string", "description": "Host name"}, "severity": {"type": "string", "description": "Incident severity"}, "summary": {"type": "string", "description": "Incident summary"}},"required": ["host", "severity", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "host": {"type": "string", "description": "Host name"},
+                        "severity": {
+                            "type": "string",
+                            "description": "Incident severity",
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Incident summary",
+                        },
+                    },
+                    "required": ["host", "severity", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_incident_commander",
                 description="Returns the incident commander on duty.",
-                parameters={"type": "object", "properties": {"severity": {"type": "string", "description": "Incident severity tier"}},"required": ["severity"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "severity": {
+                            "type": "string",
+                            "description": "Incident severity tier",
+                        }
+                    },
+                    "required": ["severity"],
+                },
             ),
         ],
     ),
@@ -422,40 +851,116 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Priya Nair",
         unsupported_topic="whether the clinic can bypass authorization entirely for self-pay conversion after denial",
         unsupported_reason="the context covers authorization and referral processing, not financial conversion policy",
-        extraction_fields=["payer_type", "study", "required_document", "urgent_red_flag", "next_admin_step", "escalation_trigger"],
+        extraction_fields=[
+            "payer_type",
+            "study",
+            "required_document",
+            "urgent_red_flag",
+            "next_admin_step",
+            "escalation_trigger",
+        ],
         qa_question="Based on the policy only, what should staff verify first, what should they avoid scheduling by default, and when should the case escalate?",
         long_context_task="Combine the policy, checklist, intake note, and appendix to recommend the safest admin next step.",
         summary_request="Draft a referral-team handoff summary with sections Need, Required Evidence, Risk, and Next Step.",
         extraction_request="Return JSON only with the prior-auth intake fields.",
         tool_single_request="Check patient eligibility and state the next best administrative action.",
         tool_multi_request="Check patient eligibility, create the prior-auth packet, schedule follow-up, and tell staff who should own the next step.",
-        tool_single_result={"patient_id": "PT-4102", "plan": "commercial PPO", "lumbar_mri_benefit": "requires prior auth"},
+        tool_single_result={
+            "patient_id": "PT-4102",
+            "plan": "commercial PPO",
+            "lumbar_mri_benefit": "requires prior auth",
+        },
         tool_multi_results=[
-            {"name": "lookup_patient_eligibility", "response": {"patient_id": "PT-4102", "plan": "commercial PPO", "lumbar_mri_benefit": "requires prior auth"}},
-            {"name": "create_prior_auth_packet", "response": {"packet_id": "PA-8831", "status": "drafted", "missing_item": "PT notes week 5-6"}},
-            {"name": "schedule_followup", "response": {"appointment_id": "SCH-2214", "slot": "2026-04-18 14:20", "owner": "referral-desk"}},
-            {"name": "get_referral_owner", "response": {"name": "Priya Nair", "extension": "4217"}},
+            {
+                "name": "lookup_patient_eligibility",
+                "response": {
+                    "patient_id": "PT-4102",
+                    "plan": "commercial PPO",
+                    "lumbar_mri_benefit": "requires prior auth",
+                },
+            },
+            {
+                "name": "create_prior_auth_packet",
+                "response": {
+                    "packet_id": "PA-8831",
+                    "status": "drafted",
+                    "missing_item": "PT notes week 5-6",
+                },
+            },
+            {
+                "name": "schedule_followup",
+                "response": {
+                    "appointment_id": "SCH-2214",
+                    "slot": "2026-04-18 14:20",
+                    "owner": "referral-desk",
+                },
+            },
+            {
+                "name": "get_referral_owner",
+                "response": {"name": "Priya Nair", "extension": "4217"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="lookup_patient_eligibility",
                 description="Returns payer and benefit eligibility information for a patient.",
-                parameters={"type": "object", "properties": {"patient_id": {"type": "string", "description": "Patient identifier"}},"required": ["patient_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "patient_id": {
+                            "type": "string",
+                            "description": "Patient identifier",
+                        }
+                    },
+                    "required": ["patient_id"],
+                },
             ),
             ToolTemplate(
                 name="create_prior_auth_packet",
                 description="Creates a draft prior-authorization packet.",
-                parameters={"type": "object", "properties": {"patient_id": {"type": "string", "description": "Patient identifier"}, "study": {"type": "string", "description": "Requested imaging study"}},"required": ["patient_id", "study"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "patient_id": {
+                            "type": "string",
+                            "description": "Patient identifier",
+                        },
+                        "study": {
+                            "type": "string",
+                            "description": "Requested imaging study",
+                        },
+                    },
+                    "required": ["patient_id", "study"],
+                },
             ),
             ToolTemplate(
                 name="schedule_followup",
                 description="Schedules an administrative follow-up slot.",
-                parameters={"type": "object", "properties": {"patient_id": {"type": "string", "description": "Patient identifier"}, "reason": {"type": "string", "description": "Scheduling reason"}},"required": ["patient_id", "reason"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "patient_id": {
+                            "type": "string",
+                            "description": "Patient identifier",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Scheduling reason",
+                        },
+                    },
+                    "required": ["patient_id", "reason"],
+                },
             ),
             ToolTemplate(
                 name="get_referral_owner",
                 description="Returns the current referral coordinator.",
-                parameters={"type": "object", "properties": {"team": {"type": "string", "description": "Administrative team"}},"required": ["team"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "team": {"type": "string", "description": "Administrative team"}
+                    },
+                    "required": ["team"],
+                },
             ),
         ],
     ),
@@ -483,40 +988,112 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Gabe Holt",
         unsupported_topic="whether the autonomy stack can ignore the disagreement sensor if manual steering still feels normal",
         unsupported_reason="the materials require safe-stop behavior and do not authorize sensor bypasses",
-        extraction_fields=["vehicle_id", "fault_code", "event_trigger", "first_safe_action", "forbidden_action", "escalation_trigger"],
+        extraction_fields=[
+            "vehicle_id",
+            "fault_code",
+            "event_trigger",
+            "first_safe_action",
+            "forbidden_action",
+            "escalation_trigger",
+        ],
         qa_question="What should the operator do first, what must not continue, and when should robotics support be called?",
         long_context_task="Use the operator guide, recovery checklist, incident notes, and appendix to define the minimum safe recovery path.",
         summary_request="Write an operator handoff summary with sections Fault, Safe Actions, Remaining Risk, and Follow-up.",
         extraction_request="Return JSON only with the local incident fields.",
         tool_single_request="Check the local diagnostic snapshot and tell the operator the next best action.",
         tool_multi_request="Read the diagnostic snapshot, queue a service stop, log the operator report, and tell the operator who owns next action.",
-        tool_single_result={"vehicle_id": "YBT7-03", "fault_code": "E214", "left_encoder_delta_deg": 4.8, "autonomy_status": "disabled"},
+        tool_single_result={
+            "vehicle_id": "YBT7-03",
+            "fault_code": "E214",
+            "left_encoder_delta_deg": 4.8,
+            "autonomy_status": "disabled",
+        },
         tool_multi_results=[
-            {"name": "read_local_diag_snapshot", "response": {"vehicle_id": "YBT7-03", "fault_code": "E214", "left_encoder_delta_deg": 4.8, "autonomy_status": "disabled"}},
-            {"name": "queue_service_stop", "response": {"stop_id": "STOP-551", "status": "queued", "bay": "service-bay-2"}},
-            {"name": "log_operator_report", "response": {"report_id": "OP-2981", "status": "saved"}},
-            {"name": "get_robotics_supervisor", "response": {"name": "Gabe Holt", "channel": "YARD-SUP"}},
+            {
+                "name": "read_local_diag_snapshot",
+                "response": {
+                    "vehicle_id": "YBT7-03",
+                    "fault_code": "E214",
+                    "left_encoder_delta_deg": 4.8,
+                    "autonomy_status": "disabled",
+                },
+            },
+            {
+                "name": "queue_service_stop",
+                "response": {
+                    "stop_id": "STOP-551",
+                    "status": "queued",
+                    "bay": "service-bay-2",
+                },
+            },
+            {
+                "name": "log_operator_report",
+                "response": {"report_id": "OP-2981", "status": "saved"},
+            },
+            {
+                "name": "get_robotics_supervisor",
+                "response": {"name": "Gabe Holt", "channel": "YARD-SUP"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="read_local_diag_snapshot",
                 description="Reads the latest local diagnostics for a yard robot.",
-                parameters={"type": "object", "properties": {"vehicle_id": {"type": "string", "description": "Vehicle identifier"}},"required": ["vehicle_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "string",
+                            "description": "Vehicle identifier",
+                        }
+                    },
+                    "required": ["vehicle_id"],
+                },
             ),
             ToolTemplate(
                 name="queue_service_stop",
                 description="Queues a controlled service stop for a vehicle.",
-                parameters={"type": "object", "properties": {"vehicle_id": {"type": "string", "description": "Vehicle identifier"}, "reason": {"type": "string", "description": "Reason for service stop"}},"required": ["vehicle_id", "reason"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "string",
+                            "description": "Vehicle identifier",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Reason for service stop",
+                        },
+                    },
+                    "required": ["vehicle_id", "reason"],
+                },
             ),
             ToolTemplate(
                 name="log_operator_report",
                 description="Stores an operator incident report.",
-                parameters={"type": "object", "properties": {"vehicle_id": {"type": "string", "description": "Vehicle identifier"}, "summary": {"type": "string", "description": "Operator report summary"}},"required": ["vehicle_id", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "string",
+                            "description": "Vehicle identifier",
+                        },
+                        "summary": {
+                            "type": "string",
+                            "description": "Operator report summary",
+                        },
+                    },
+                    "required": ["vehicle_id", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_robotics_supervisor",
                 description="Returns the robotics supervisor on duty.",
-                parameters={"type": "object", "properties": {"yard": {"type": "string", "description": "Yard or site name"}},"required": ["yard"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"yard": {"type": "string", "description": "Yard or site name"}},
+                    "required": ["yard"],
+                },
             ),
         ],
     ),
@@ -544,40 +1121,118 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Mila Chen",
         unsupported_topic="whether procurement will waive the mismatch because the supplier is strategic",
         unsupported_reason="the provided intake rules cover validation and routing only, not discretionary procurement waivers",
-        extraction_fields=["vendor_id", "po_number", "invoice_total", "tolerance_pct", "route_required", "review_owner"],
+        extraction_fields=[
+            "vendor_id",
+            "po_number",
+            "invoice_total",
+            "tolerance_pct",
+            "route_required",
+            "review_owner",
+        ],
         qa_question="What should the intake flow validate first, what should not be auto-posted, and when must the invoice be routed to review?",
         long_context_task="Use the intake spec, vendor rules, sample intake note, and appendix to recommend the safest handling path.",
         summary_request="Create a document-processing handoff note with sections Exception, Validation Performed, Risk, and Next Step.",
         extraction_request="Return JSON only with the AP intake fields.",
         tool_single_request="Validate the vendor and state the next best processing step.",
         tool_multi_request="Validate the vendor, submit the extracted fields, route the exception review, and tell AP who owns the case next.",
-        tool_single_result={"vendor_id": "V-1108", "status": "approved", "payment_terms": "net 45"},
+        tool_single_result={
+            "vendor_id": "V-1108",
+            "status": "approved",
+            "payment_terms": "net 45",
+        },
         tool_multi_results=[
-            {"name": "validate_vendor", "response": {"vendor_id": "V-1108", "status": "approved", "payment_terms": "net 45"}},
-            {"name": "submit_extracted_fields", "response": {"submission_id": "SUB-4401", "status": "accepted", "tolerance_check": "failed"}},
-            {"name": "route_exception_review", "response": {"case_id": "AP-6104", "queue": "ap-exceptions", "priority": "medium"}},
-            {"name": "get_ap_owner", "response": {"name": "Mila Chen", "extension": "3114"}},
+            {
+                "name": "validate_vendor",
+                "response": {
+                    "vendor_id": "V-1108",
+                    "status": "approved",
+                    "payment_terms": "net 45",
+                },
+            },
+            {
+                "name": "submit_extracted_fields",
+                "response": {
+                    "submission_id": "SUB-4401",
+                    "status": "accepted",
+                    "tolerance_check": "failed",
+                },
+            },
+            {
+                "name": "route_exception_review",
+                "response": {
+                    "case_id": "AP-6104",
+                    "queue": "ap-exceptions",
+                    "priority": "medium",
+                },
+            },
+            {
+                "name": "get_ap_owner",
+                "response": {"name": "Mila Chen", "extension": "3114"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="validate_vendor",
                 description="Checks whether a vendor is approved for invoice processing.",
-                parameters={"type": "object", "properties": {"vendor_id": {"type": "string", "description": "Vendor identifier"}},"required": ["vendor_id"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "vendor_id": {
+                            "type": "string",
+                            "description": "Vendor identifier",
+                        }
+                    },
+                    "required": ["vendor_id"],
+                },
             ),
             ToolTemplate(
                 name="submit_extracted_fields",
                 description="Submits extracted document fields to the AP intake service.",
-                parameters={"type": "object", "properties": {"document_id": {"type": "string", "description": "Document identifier"}, "po_number": {"type": "string", "description": "Purchase order number"}, "invoice_total": {"type": "number", "description": "Invoice total amount"}},"required": ["document_id", "po_number", "invoice_total"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "document_id": {
+                            "type": "string",
+                            "description": "Document identifier",
+                        },
+                        "po_number": {
+                            "type": "string",
+                            "description": "Purchase order number",
+                        },
+                        "invoice_total": {
+                            "type": "number",
+                            "description": "Invoice total amount",
+                        },
+                    },
+                    "required": ["document_id", "po_number", "invoice_total"],
+                },
             ),
             ToolTemplate(
                 name="route_exception_review",
                 description="Routes a document to AP exception review.",
-                parameters={"type": "object", "properties": {"document_id": {"type": "string", "description": "Document identifier"}, "reason": {"type": "string", "description": "Reason for review routing"}},"required": ["document_id", "reason"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "document_id": {
+                            "type": "string",
+                            "description": "Document identifier",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Reason for review routing",
+                        },
+                    },
+                    "required": ["document_id", "reason"],
+                },
             ),
             ToolTemplate(
                 name="get_ap_owner",
                 description="Returns the AP exception owner on duty.",
-                parameters={"type": "object", "properties": {"queue": {"type": "string", "description": "AP work queue"}},"required": ["queue"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"queue": {"type": "string", "description": "AP work queue"}},
+                    "required": ["queue"],
+                },
             ),
         ],
     ),
@@ -605,40 +1260,99 @@ USE_CASES: list[UseCaseTemplate] = [
         secondary_contact_name="Leo Martens",
         unsupported_topic="whether the team should disable token refresh entirely as a temporary workaround",
         unsupported_reason="the runbook documents safe diagnostics and restart order, not auth bypass decisions",
-        extraction_fields=["service", "release", "symptom", "config_key", "safe_restart_step", "escalation_trigger"],
+        extraction_fields=[
+            "service",
+            "release",
+            "symptom",
+            "config_key",
+            "safe_restart_step",
+            "escalation_trigger",
+        ],
         qa_question="Using only the runbook and notes, what should be checked first, what should not be deleted, and when should the issue escalate?",
         long_context_task="Synthesize the README, deploy runbook, incident note, and appendix into the minimum safe recovery plan.",
         summary_request="Write an engineering handoff note with sections Symptom, Checks, Risk, and Next Step.",
         extraction_request="Return JSON only with the deploy-incident fields.",
         tool_single_request="Check the runtime config or logs and tell the engineer the next best action.",
         tool_multi_request="Search logs, read runtime config, create the change ticket, and tell the engineer who owns the next action.",
-        tool_single_result={"service": "bridge-sync", "mqtt_session_ttl": 45, "recommended_baseline": 120, "last_error": "token refresh succeeded but client session not renewed"},
+        tool_single_result={
+            "service": "bridge-sync",
+            "mqtt_session_ttl": 45,
+            "recommended_baseline": 120,
+            "last_error": "token refresh succeeded but client session not renewed",
+        },
         tool_multi_results=[
-            {"name": "search_service_logs", "response": {"service": "bridge-sync", "error": "client session stale after token refresh", "occurrences_last_hour": 6}},
-            {"name": "read_runtime_config", "response": {"service": "bridge-sync", "mqtt_session_ttl": 45, "recommended_baseline": 120}},
-            {"name": "create_change_ticket", "response": {"ticket_id": "CHG-7742", "priority": "high", "owner_group": "edge-platform"}},
-            {"name": "get_platform_owner", "response": {"name": "Leo Martens", "slack": "#edge-platform"}},
+            {
+                "name": "search_service_logs",
+                "response": {
+                    "service": "bridge-sync",
+                    "error": "client session stale after token refresh",
+                    "occurrences_last_hour": 6,
+                },
+            },
+            {
+                "name": "read_runtime_config",
+                "response": {
+                    "service": "bridge-sync",
+                    "mqtt_session_ttl": 45,
+                    "recommended_baseline": 120,
+                },
+            },
+            {
+                "name": "create_change_ticket",
+                "response": {
+                    "ticket_id": "CHG-7742",
+                    "priority": "high",
+                    "owner_group": "edge-platform",
+                },
+            },
+            {
+                "name": "get_platform_owner",
+                "response": {"name": "Leo Martens", "slack": "#edge-platform"},
+            },
         ],
         tools=[
             ToolTemplate(
                 name="search_service_logs",
                 description="Searches recent service logs for the target service.",
-                parameters={"type": "object", "properties": {"service": {"type": "string", "description": "Service name"}},"required": ["service"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"service": {"type": "string", "description": "Service name"}},
+                    "required": ["service"],
+                },
             ),
             ToolTemplate(
                 name="read_runtime_config",
                 description="Reads the runtime configuration for a service.",
-                parameters={"type": "object", "properties": {"service": {"type": "string", "description": "Service name"}},"required": ["service"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"service": {"type": "string", "description": "Service name"}},
+                    "required": ["service"],
+                },
             ),
             ToolTemplate(
                 name="create_change_ticket",
                 description="Creates a high-signal change or incident ticket for the platform team.",
-                parameters={"type": "object", "properties": {"service": {"type": "string", "description": "Service name"}, "priority": {"type": "string", "description": "Ticket priority"}, "summary": {"type": "string", "description": "Change summary"}},"required": ["service", "priority", "summary"]},
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "service": {"type": "string", "description": "Service name"},
+                        "priority": {
+                            "type": "string",
+                            "description": "Ticket priority",
+                        },
+                        "summary": {"type": "string", "description": "Change summary"},
+                    },
+                    "required": ["service", "priority", "summary"],
+                },
             ),
             ToolTemplate(
                 name="get_platform_owner",
                 description="Returns the platform owner for a service domain.",
-                parameters={"type": "object", "properties": {"team": {"type": "string", "description": "Platform team name"}},"required": ["team"]},
+                parameters={
+                    "type": "object",
+                    "properties": {"team": {"type": "string", "description": "Platform team name"}},
+                    "required": ["team"],
+                },
             ),
         ],
     ),

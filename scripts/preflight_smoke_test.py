@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 import time
 import traceback
@@ -19,7 +18,6 @@ from gemma_vllm_benchmark.runner import (  # noqa: E402
     tokenize_chat_messages_detailed,
     verify_model,
 )
-
 
 REASONING_LEAK_PATTERNS = [
     ("gemma_channel_start", "<|channel>"),
@@ -55,7 +53,9 @@ def _exception_payload(exc: Exception) -> dict[str, Any]:
     }
 
 
-def _persist_completion_artifacts(run_dir: Path, prefix: str, completion: dict[str, Any]) -> dict[str, str]:
+def _persist_completion_artifacts(
+    run_dir: Path, prefix: str, completion: dict[str, Any]
+) -> dict[str, str]:
     paths = {
         "response_path": str(run_dir / f"{prefix}_response.txt"),
         "reasoning_path": str(run_dir / f"{prefix}_reasoning.txt"),
@@ -147,11 +147,7 @@ def _tool_call_leak_diagnosis(text: str) -> dict[str, Any]:
     return {
         "detected": bool(markers),
         "markers": markers,
-        "message": (
-            "Tool-call protocol tokens leaked into visible content."
-            if markers
-            else None
-        ),
+        "message": ("Tool-call protocol tokens leaked into visible content." if markers else None),
     }
 
 
@@ -236,7 +232,12 @@ def _validate_structured_payload(parsed: Any, expected: dict[str, Any]) -> dict[
     }
 
 
-def _failure_entry(check_name: str, failure_class: str, message: str, evidence: dict[str, Any] | None = None) -> dict[str, Any]:
+def _failure_entry(
+    check_name: str,
+    failure_class: str,
+    message: str,
+    evidence: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     return {
         "check": check_name,
         "class": failure_class,
@@ -273,7 +274,9 @@ def _basic_check_failure_classes(
         )
     reasoning_leak = _reasoning_leak_diagnosis(completion, thinking_enabled)
     if reasoning_leak["detected"]:
-        failures.append(_failure_entry(check_name, "parser_leak", reasoning_leak["message"], reasoning_leak))
+        failures.append(
+            _failure_entry(check_name, "parser_leak", reasoning_leak["message"], reasoning_leak)
+        )
     if require_reasoning_and_content:
         if not completion["reasoning"].strip():
             failures.append(
@@ -466,11 +469,15 @@ def _run_structured_output_check(
         parsed_json = json.loads(completion["content"])
     except ValueError as exc:
         parse_error = str(exc)
-    validation = _validate_structured_payload(parsed_json, expected_payload) if parse_error is None else {
-        "schema_valid": False,
-        "exact_match": False,
-        "errors": [f"Invalid JSON: {parse_error}"],
-    }
+    validation = (
+        _validate_structured_payload(parsed_json, expected_payload)
+        if parse_error is None
+        else {
+            "schema_valid": False,
+            "exact_match": False,
+            "errors": [f"Invalid JSON: {parse_error}"],
+        }
+    )
     failures = _basic_check_failure_classes(
         "structured_output_chat_completion",
         completion,
@@ -597,7 +604,14 @@ def _run_tool_check(
     )
     tool_leak = _tool_call_leak_diagnosis(completion["content"])
     if tool_leak["detected"]:
-        failures.append(_failure_entry("tool_chat_completion", "tool_call_leak", tool_leak["message"], tool_leak))
+        failures.append(
+            _failure_entry(
+                "tool_chat_completion",
+                "tool_call_leak",
+                tool_leak["message"],
+                tool_leak,
+            )
+        )
     if len(completion["tool_calls"]) == 0:
         failures.append(
             _failure_entry(
@@ -655,7 +669,13 @@ def _run_tool_check(
         {
             "role": "tool",
             "tool_call_id": first_tool_call["id"],
-            "content": json.dumps({"site": "alpha", "status": "healthy", "last_checked": "2026-04-17T09:00:00Z"}),
+            "content": json.dumps(
+                {
+                    "site": "alpha",
+                    "status": "healthy",
+                    "last_checked": "2026-04-17T09:00:00Z",
+                }
+            ),
         },
     ]
     follow_up_tokenize = tokenize_chat_messages_detailed(
@@ -696,7 +716,9 @@ def _run_tool_check(
         tools=tools,
         seed=seed + 10,
     )
-    follow_up_artifacts = _persist_completion_artifacts(run_dir, "tool_follow_up", follow_up_completion)
+    follow_up_artifacts = _persist_completion_artifacts(
+        run_dir, "tool_follow_up", follow_up_completion
+    )
     follow_up_failures = _basic_check_failure_classes(
         "tool_follow_up_chat_completion",
         follow_up_completion,
@@ -753,9 +775,20 @@ def _run_image_check(
     seed: int,
 ) -> dict[str, Any]:
     sample_images = sorted((PROJECT_ROOT / "data" / "image_corpora").rglob("*"))
-    sample_image = next((path for path in sample_images if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg"}), None)
+    sample_image = next(
+        (
+            path
+            for path in sample_images
+            if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg"}
+        ),
+        None,
+    )
     if sample_image is None:
-        return {"status": "skipped", "reason": "no_staged_local_image_found", "failure_classes": []}
+        return {
+            "status": "skipped",
+            "reason": "no_staged_local_image_found",
+            "failure_classes": [],
+        }
 
     rel_image = sample_image.relative_to(PROJECT_ROOT).as_posix()
     messages = [
@@ -810,7 +843,11 @@ def _run_image_check(
     return {
         "status": "ok" if not failures else "error",
         **diagnosis,
-        "artifacts": {**artifacts, "diagnosis_path": diagnosis_path, "image_path": str(sample_image)},
+        "artifacts": {
+            **artifacts,
+            "diagnosis_path": diagnosis_path,
+            "image_path": str(sample_image),
+        },
     }
 
 
@@ -879,9 +916,14 @@ def main() -> None:
             thinking_enabled=thinking_enabled,
             seed=args.seed,
         )
-        report["failures"].extend(report["checks"]["basic_chat_completion"].get("failure_classes", []))
+        report["failures"].extend(
+            report["checks"]["basic_chat_completion"].get("failure_classes", [])
+        )
     except Exception as exc:
-        report["checks"]["basic_chat_completion"] = {"status": "error", **_exception_payload(exc)}
+        report["checks"]["basic_chat_completion"] = {
+            "status": "error",
+            **_exception_payload(exc),
+        }
         report["failures"].append(
             _failure_entry(
                 "basic_chat_completion",
@@ -901,9 +943,14 @@ def main() -> None:
             thinking_enabled=thinking_enabled,
             seed=args.seed + 20,
         )
-        report["failures"].extend(report["checks"]["structured_output_chat_completion"].get("failure_classes", []))
+        report["failures"].extend(
+            report["checks"]["structured_output_chat_completion"].get("failure_classes", [])
+        )
     except Exception as exc:
-        report["checks"]["structured_output_chat_completion"] = {"status": "error", **_exception_payload(exc)}
+        report["checks"]["structured_output_chat_completion"] = {
+            "status": "error",
+            **_exception_payload(exc),
+        }
         report["failures"].append(
             _failure_entry(
                 "structured_output_chat_completion",
@@ -914,8 +961,16 @@ def main() -> None:
         )
 
     if args.skip_tool_check:
-        report["checks"]["tool_chat_completion"] = {"status": "skipped", "reason": "skip_tool_check", "failure_classes": []}
-        report["checks"]["tool_follow_up_chat_completion"] = {"status": "skipped", "reason": "skip_tool_check", "failure_classes": []}
+        report["checks"]["tool_chat_completion"] = {
+            "status": "skipped",
+            "reason": "skip_tool_check",
+            "failure_classes": [],
+        }
+        report["checks"]["tool_follow_up_chat_completion"] = {
+            "status": "skipped",
+            "reason": "skip_tool_check",
+            "failure_classes": [],
+        }
     else:
         try:
             first_result, follow_up_result = _run_tool_check(
@@ -934,7 +989,11 @@ def main() -> None:
         except Exception as exc:
             payload = {"status": "error", **_exception_payload(exc)}
             report["checks"]["tool_chat_completion"] = payload
-            report["checks"]["tool_follow_up_chat_completion"] = {"status": "skipped", "reason": "tool_check_exception", "failure_classes": []}
+            report["checks"]["tool_follow_up_chat_completion"] = {
+                "status": "skipped",
+                "reason": "tool_check_exception",
+                "failure_classes": [],
+            }
             report["failures"].append(
                 _failure_entry(
                     "tool_chat_completion",
@@ -945,7 +1004,11 @@ def main() -> None:
             )
 
     if args.skip_image_check:
-        report["checks"]["image_chat_completion"] = {"status": "skipped", "reason": "skip_image_check", "failure_classes": []}
+        report["checks"]["image_chat_completion"] = {
+            "status": "skipped",
+            "reason": "skip_image_check",
+            "failure_classes": [],
+        }
     else:
         try:
             report["checks"]["image_chat_completion"] = _run_image_check(
@@ -957,9 +1020,14 @@ def main() -> None:
                 thinking_enabled=thinking_enabled,
                 seed=args.seed + 2,
             )
-            report["failures"].extend(report["checks"]["image_chat_completion"].get("failure_classes", []))
+            report["failures"].extend(
+                report["checks"]["image_chat_completion"].get("failure_classes", [])
+            )
         except Exception as exc:
-            report["checks"]["image_chat_completion"] = {"status": "error", **_exception_payload(exc)}
+            report["checks"]["image_chat_completion"] = {
+                "status": "error",
+                **_exception_payload(exc),
+            }
             report["failures"].append(
                 _failure_entry(
                     "image_chat_completion",

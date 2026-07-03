@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import yaml
@@ -70,16 +69,27 @@ def main() -> None:
         supported_modalities = backend.get("supported_modalities") or []
         if set(supported_modalities) - {"text", "image"}:
             missing.append(f"{backend_path} supported_modalities must only contain text/image")
-        if "audio" in supported_modalities or backend.get("audio_supported") not in (False, None):
+        if "audio" in supported_modalities or backend.get("audio_supported") not in (
+            False,
+            None,
+        ):
             missing.append(f"{backend_path} must declare audio as unsupported for this benchmark")
         launch_command = backend.get("launch_command", "")
         if "--mm-processor-kwargs" not in launch_command:
             missing.append(f"{backend_path} launch_command must pin --mm-processor-kwargs")
         if "--limit-mm-per-prompt image=1" not in launch_command:
-            missing.append(f"{backend_path} launch_command must cap image inputs at one per request")
-        if bool(backend.get("prefix_caching_enabled")) and "--no-enable-prefix-caching" in launch_command:
+            missing.append(
+                f"{backend_path} launch_command must cap image inputs at one per request"
+            )
+        if (
+            bool(backend.get("prefix_caching_enabled"))
+            and "--no-enable-prefix-caching" in launch_command
+        ):
             missing.append(f"{backend_path} enables prefix caching but launch_command disables it")
-        if not bool(backend.get("prefix_caching_enabled")) and "--no-enable-prefix-caching" not in launch_command:
+        if (
+            not bool(backend.get("prefix_caching_enabled"))
+            and "--no-enable-prefix-caching" not in launch_command
+        ):
             missing.append(f"{backend_path} must disable prefix caching in launch_command")
 
     systems_manifest_path = PROJECT_ROOT / "systems" / "manifest.yaml"
@@ -101,7 +111,9 @@ def main() -> None:
             print(item)
         raise SystemExit(1)
 
-    print(f"Validated {len(manifest['scenarios'])} scenarios and {len(expected_backend_paths)} backend configs successfully.")
+    print(
+        f"Validated {len(manifest['scenarios'])} scenarios and {len(expected_backend_paths)} backend configs successfully."
+    )
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import random
 import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -28,8 +27,11 @@ from .runner import (
     verify_model,
     write_record,
 )
-from .tegrastats import TegraStatsSession, summarize_tegrastats_log, write_tegrastats_timeseries
-
+from .tegrastats import (
+    TegraStatsSession,
+    summarize_tegrastats_log,
+    write_tegrastats_timeseries,
+)
 
 SYSTEMS_SYSTEM_PROMPT = (
     "You are Gemma 4 running in a vLLM systems benchmark on Jetson Thor. "
@@ -109,7 +111,9 @@ def _itl_stats(output_event_offsets_ms: list[float]) -> dict[str, Any]:
     }
 
 
-def _compute_joules(telemetry_summary: dict[str, Any] | None, elapsed_ms: float | None) -> float | None:
+def _compute_joules(
+    telemetry_summary: dict[str, Any] | None, elapsed_ms: float | None
+) -> float | None:
     if not telemetry_summary or elapsed_ms is None:
         return None
     power_current_mw_avg = telemetry_summary.get("power_current_mw_avg")
@@ -242,7 +246,9 @@ def _build_synthetic_messages(
     attempts = 0
     while count < target_prompt_tokens and attempts < 8:
         grow_by = max(1, math.ceil((target_prompt_tokens - count) / block_cost))
-        blocks.extend(_render_reference_block(index) for index in range(grow_index, grow_index + grow_by))
+        blocks.extend(
+            _render_reference_block(index) for index in range(grow_index, grow_index + grow_by)
+        )
         grow_index += grow_by
         detail = tokenize_chat_messages_detailed(
             base_url=base_url,
@@ -308,7 +314,10 @@ def _write_completion_artifacts(
     _write_text(reasoning_path, completion["reasoning"])
     _write_json(tool_calls_path, completion["tool_calls"])
     _write_text(raw_events_path, "\n".join(completion["raw_events"]))
-    _write_text(event_timeline_path, "\n".join(json.dumps(item) for item in completion["raw_event_records"]))
+    _write_text(
+        event_timeline_path,
+        "\n".join(json.dumps(item) for item in completion["raw_event_records"]),
+    )
     _write_json(payload_path, completion["request_payload"])
     if prompt_token_debug is not None:
         _write_json(prompt_token_debug_path, prompt_token_debug)
@@ -325,7 +334,9 @@ def _write_completion_artifacts(
         "raw_events_path": str(raw_events_path),
         "raw_event_timeline_path": str(event_timeline_path),
         "request_payload_path": str(payload_path),
-        "prompt_token_debug_path": str(prompt_token_debug_path) if prompt_token_debug is not None else None,
+        "prompt_token_debug_path": str(prompt_token_debug_path)
+        if prompt_token_debug is not None
+        else None,
         "completion_token_fallback_debug_path": fallback_debug_path_str,
     }
 
@@ -356,7 +367,11 @@ def _build_request_record(
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     server_stats = _derive_server_stats(completion, metric_values)
-    effective_ttft_ms = completion["ttft_ms"] if completion["ttft_ms"] is not None else server_stats.get("server_ttft_ms")
+    effective_ttft_ms = (
+        completion["ttft_ms"]
+        if completion["ttft_ms"] is not None
+        else server_stats.get("server_ttft_ms")
+    )
     completion_tokens = (completion.get("usage") or {}).get("completion_tokens")
     joules_per_request = _compute_joules(telemetry_summary, completion["latency_ms"])
     joules_per_output_token = None
@@ -383,7 +398,9 @@ def _build_request_record(
         "latency_ms": completion["latency_ms"],
         "ttft_ms": completion["ttft_ms"],
         "ttft_ms_effective": effective_ttft_ms,
-        "ttft_source": "client_stream" if completion["ttft_ms"] is not None else ("server_metrics" if effective_ttft_ms is not None else None),
+        "ttft_source": "client_stream"
+        if completion["ttft_ms"] is not None
+        else ("server_metrics" if effective_ttft_ms is not None else None),
         "usage": completion["usage"],
         "finish_reason": completion["finish_reason"],
         "content_chars": len(completion["content"]),
@@ -463,7 +480,11 @@ def _execute_single_request(
     metrics_after = scrape_metrics(base_url, api_key) if capture_metrics else None
     metric_values = metrics_delta(metrics_before, metrics_after) if capture_metrics else None
     telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms) if tegra_active else None
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms)
+        if tegra_active
+        else None
+    )
     artifact_paths = _write_completion_artifacts(response_base, completion, prompt_token_debug)
     return _build_request_record(
         backend_fields=backend_fields,
@@ -490,7 +511,9 @@ def _execute_single_request(
     )
 
 
-def _build_generation(max_tokens: int, temperature: float = 0.7, top_p: float = 0.95, top_k: int = 64) -> dict[str, Any]:
+def _build_generation(
+    max_tokens: int, temperature: float = 0.7, top_p: float = 0.95, top_k: int = 64
+) -> dict[str, Any]:
     return {
         "max_tokens": max_tokens,
         "temperature": temperature,
@@ -515,16 +538,39 @@ def _batch_summary_record(
     telemetry_path: str | None,
     telemetry_timeseries_path: str | None,
 ) -> dict[str, Any]:
-    latencies = [record["latency_ms"] for record in request_records if isinstance(record.get("latency_ms"), (int, float))]
-    ttfts = [record["ttft_ms_effective"] for record in request_records if isinstance(record.get("ttft_ms_effective"), (int, float))]
-    completion_tokens_total = sum(
-        (record.get("usage") or {}).get("completion_tokens") or 0
+    latencies = [
+        record["latency_ms"]
         for record in request_records
+        if isinstance(record.get("latency_ms"), (int, float))
+    ]
+    ttfts = [
+        record["ttft_ms_effective"]
+        for record in request_records
+        if isinstance(record.get("ttft_ms_effective"), (int, float))
+    ]
+    completion_tokens_total = sum(
+        (record.get("usage") or {}).get("completion_tokens") or 0 for record in request_records
     )
-    server_ttft_ms = _metric_average(metric_values, "vllm:time_to_first_token_seconds_sum", "vllm:time_to_first_token_seconds_count")
-    server_queue_ms = _metric_average(metric_values, "vllm:request_queue_time_seconds_sum", "vllm:request_queue_time_seconds_count")
-    server_prefill_ms = _metric_average(metric_values, "vllm:request_prefill_time_seconds_sum", "vllm:request_prefill_time_seconds_count")
-    server_decode_ms = _metric_average(metric_values, "vllm:request_decode_time_seconds_sum", "vllm:request_decode_time_seconds_count")
+    server_ttft_ms = _metric_average(
+        metric_values,
+        "vllm:time_to_first_token_seconds_sum",
+        "vllm:time_to_first_token_seconds_count",
+    )
+    server_queue_ms = _metric_average(
+        metric_values,
+        "vllm:request_queue_time_seconds_sum",
+        "vllm:request_queue_time_seconds_count",
+    )
+    server_prefill_ms = _metric_average(
+        metric_values,
+        "vllm:request_prefill_time_seconds_sum",
+        "vllm:request_prefill_time_seconds_count",
+    )
+    server_decode_ms = _metric_average(
+        metric_values,
+        "vllm:request_decode_time_seconds_sum",
+        "vllm:request_decode_time_seconds_count",
+    )
     throughput_tps = None
     if batch_wall_time_ms > 0:
         throughput_tps = round(completion_tokens_total / (batch_wall_time_ms / 1000.0), 3)
@@ -653,7 +699,11 @@ def _run_thermal_soak(
             tegra.stop()
 
     telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms) if tegra_active else None
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms)
+        if tegra_active
+        else None
+    )
     write_record(
         run_paths.records_path,
         {
@@ -735,7 +785,11 @@ def _run_concurrency_scaling(
                             / batch_id
                             / f"request_{request_index:02d}"
                         )
-                        request_seed = None if seed is None else seed + (level * 1000) + (round_index * 100) + request_index
+                        request_seed = (
+                            None
+                            if seed is None
+                            else seed + (level * 1000) + (round_index * 100) + request_index
+                        )
                         futures.append(
                             executor.submit(
                                 _execute_single_request,
@@ -769,7 +823,11 @@ def _run_concurrency_scaling(
             metrics_after = scrape_metrics(base_url, api_key)
             metric_values = metrics_delta(metrics_before, metrics_after)
             telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-            telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms) if tegra_active else None
+            telemetry_timeseries_path = (
+                write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms)
+                if tegra_active
+                else None
+            )
             for record in sorted(request_records, key=lambda item: item["request_label"] or ""):
                 write_record(run_paths.records_path, record)
             write_record(
@@ -823,10 +881,7 @@ def _run_io_length_sweep(
                 preserve_prefix=False,
             )
             response_base = (
-                run_paths.responses_dir
-                / experiment["id"]
-                / case_id
-                / f"repeat_{repeat_index:02d}"
+                run_paths.responses_dir / experiment["id"] / case_id / f"repeat_{repeat_index:02d}"
             )
             record = _execute_single_request(
                 base_url=base_url,
@@ -932,7 +987,9 @@ def _run_energy_efficiency(
                 thinking_enabled=thinking_enabled,
                 request_label=f"{case_id}-{repeat_index:02d}",
             )
-            response_base = run_paths.responses_dir / experiment["id"] / case_id / f"repeat_{repeat_index:02d}"
+            response_base = (
+                run_paths.responses_dir / experiment["id"] / case_id / f"repeat_{repeat_index:02d}"
+            )
             record = _execute_single_request(
                 base_url=base_url,
                 api_key=api_key,
@@ -1014,7 +1071,12 @@ def _run_kv_cache_saturation(
                     for prepared in prepared_requests:
                         request_index = prepared["request_index"]
                         request_label = prepared["request_label"]
-                        response_base = run_paths.responses_dir / experiment["id"] / batch_id / f"request_{request_index:02d}"
+                        response_base = (
+                            run_paths.responses_dir
+                            / experiment["id"]
+                            / batch_id
+                            / f"request_{request_index:02d}"
+                        )
                         futures.append(
                             executor.submit(
                                 _execute_single_request,
@@ -1031,7 +1093,9 @@ def _run_kv_cache_saturation(
                                 prompt_token_debug=prepared["prompt_token_debug"],
                                 generation=generation,
                                 thinking_enabled=thinking_enabled,
-                                seed=None if seed is None else seed + (level * 1000) + request_index,
+                                seed=None
+                                if seed is None
+                                else seed + (level * 1000) + request_index,
                                 request_label=request_label,
                                 batch_id=batch_id,
                                 batch_concurrency=level,
@@ -1048,7 +1112,11 @@ def _run_kv_cache_saturation(
             metrics_after = scrape_metrics(base_url, api_key)
             metric_values = metrics_delta(metrics_before, metrics_after)
             telemetry_summary = summarize_tegrastats_log(telemetry_path) if tegra_active else None
-            telemetry_timeseries_path = write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms) if tegra_active else None
+            telemetry_timeseries_path = (
+                write_tegrastats_timeseries(telemetry_path, tegrastats_interval_ms)
+                if tegra_active
+                else None
+            )
             for record in sorted(request_records, key=lambda item: item["request_label"] or ""):
                 write_record(run_paths.records_path, record)
             write_record(
@@ -1314,7 +1382,9 @@ def run_systems_suite(
             {
                 "systems_manifest_path": str(effective_manifest_path),
                 "experiment_results": experiment_results,
-                "experiment_error_count": sum(1 for item in experiment_results if item["status"] == "error"),
+                "experiment_error_count": sum(
+                    1 for item in experiment_results if item["status"] == "error"
+                ),
             }
         ),
     )

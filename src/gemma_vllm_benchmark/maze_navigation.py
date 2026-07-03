@@ -5,7 +5,7 @@ import statistics
 import time
 from collections import deque
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +29,11 @@ from .runner import (
     verify_model,
     write_record,
 )
-from .tegrastats import TegraStatsSession, summarize_tegrastats_log, write_tegrastats_timeseries
-
+from .tegrastats import (
+    TegraStatsSession,
+    summarize_tegrastats_log,
+    write_tegrastats_timeseries,
+)
 
 ALLOWED_ACTIONS = (
     "move_forward",
@@ -135,7 +138,9 @@ class MazeLevel:
                         rendered_row[x] = "#"
                 lines.append("".join(rendered_row))
             lines.append("")
-        lines.append("Legend: # wall, . open, S start, E exit, U ascend-only shaft, D descend-only shaft, B bidirectional shaft")
+        lines.append(
+            "Legend: # wall, . open, S start, E exit, U ascend-only shaft, D descend-only shaft, B bidirectional shaft"
+        )
         return "\n".join(lines).strip()
 
 
@@ -168,7 +173,9 @@ def _level_from_payload(item: dict[str, Any]) -> MazeLevel:
             chars = list(row)
             for x, char in enumerate(chars):
                 if char not in OPEN_SYMBOLS and char != "#":
-                    raise ValueError(f"Level {item['id']} has unsupported cell marker {char!r} at {(x, y, z)}.")
+                    raise ValueError(
+                        f"Level {item['id']} has unsupported cell marker {char!r} at {(x, y, z)}."
+                    )
                 if char == "S":
                     if start_position is not None:
                         raise ValueError(f"Level {item['id']} has multiple start markers.")
@@ -189,8 +196,12 @@ def _level_from_payload(item: dict[str, Any]) -> MazeLevel:
         if action not in SEARCH_ACTIONS:
             raise ValueError(f"Level {item['id']} requires unsupported optimal action {action!r}.")
     recommended_max_calls = item.get("recommended_max_calls")
-    if recommended_max_calls is not None and (not isinstance(recommended_max_calls, int) or recommended_max_calls < 1):
-        raise ValueError(f"Level {item['id']} has invalid recommended_max_calls={recommended_max_calls!r}.")
+    if recommended_max_calls is not None and (
+        not isinstance(recommended_max_calls, int) or recommended_max_calls < 1
+    ):
+        raise ValueError(
+            f"Level {item['id']} has invalid recommended_max_calls={recommended_max_calls!r}."
+        )
     return MazeLevel(
         id=item["id"],
         difficulty=item["difficulty"],
@@ -243,7 +254,13 @@ def parse_action(content: str) -> dict[str, Any]:
         }
     action = parsed.get("action")
     if action in ALLOWED_ACTIONS:
-        return {"action": action, "format_valid": True, "message": None, "raw": normalized, "parsed_json": parsed}
+        return {
+            "action": action,
+            "format_valid": True,
+            "message": None,
+            "raw": normalized,
+            "parsed_json": parsed,
+        }
     return {
         "action": None,
         "format_valid": False,
@@ -406,11 +423,13 @@ class MazeSolver:
     def __init__(self, level: MazeLevel):
         self.level = level
 
-    @lru_cache(maxsize=None)
+    # Caching on the method pins the solver instance, which is fine here:
+    # solvers are created per level and discarded with their cache.
+    @cache  # noqa: B019
     def shortest_path(self, state: MazeState) -> tuple[str, ...] | None:
         if self.level.is_goal(state):
-            return tuple()
-        queue: deque[tuple[MazeState, tuple[str, ...]]] = deque([(state, tuple())])
+            return ()
+        queue: deque[tuple[MazeState, tuple[str, ...]]] = deque([(state, ())])
         visited = {state}
         while queue:
             current, path = queue.popleft()
@@ -457,7 +476,7 @@ def build_system_prompt() -> str:
         "You are controlling a simulated drone in an offline maze-navigation benchmark on Jetson Thor. "
         "Your objective is to reach the exit using the fewest total actions possible. "
         "Reason over the current state, heading, and vertical-shaft rules, then produce only the next action. "
-        "Output must be valid JSON matching this structure: {\"action\": \"<allowed_action>\"}. "
+        'Output must be valid JSON matching this structure: {"action": "<allowed_action>"}. '
         "Do not add explanations, markdown, or extra keys. "
         "Allowed actions are: move_forward, turn_left, turn_right, ascend, descend, hover, stop."
     )
@@ -600,7 +619,11 @@ def build_level_reference(level: MazeLevel) -> dict[str, Any]:
         "description": level.description,
         "allowed_actions": list(ALLOWED_ACTIONS),
         "start_state": _state_dict(level.start_state),
-        "exit_position": {"x": level.exit_position[0], "y": level.exit_position[1], "z": level.exit_position[2]},
+        "exit_position": {
+            "x": level.exit_position[0],
+            "y": level.exit_position[1],
+            "z": level.exit_position[2],
+        },
         "required_optimal_actions": list(level.required_optimal_actions),
         "recommended_max_calls": level.recommended_max_calls,
         "maze_render": level.render(),
@@ -616,7 +639,9 @@ def validate_maze_levels(levels: list[MazeLevel]) -> list[dict[str, Any]]:
         optimal_path = solver.shortest_path(level.start_state)
         if optimal_path is None:
             raise ValueError(f"Level {level.id} has no path from start to exit.")
-        missing_required = [action for action in level.required_optimal_actions if action not in optimal_path]
+        missing_required = [
+            action for action in level.required_optimal_actions if action not in optimal_path
+        ]
         if missing_required:
             raise ValueError(
                 f"Level {level.id} optimal path is missing required actions: {', '.join(missing_required)}. "
@@ -665,7 +690,12 @@ def run_maze_navigation_suite(
         raise ValueError("No maze levels matched the requested filters.")
     validations = validate_maze_levels(selected_levels)
     thinking_modes = thinking_modes or [False, True]
-    generation = generation or {"temperature": 0.0, "top_p": 1.0, "top_k": 1, "max_tokens": 1024}
+    generation = generation or {
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "top_k": 1,
+        "max_tokens": 1024,
+    }
 
     run_paths = ensure_run_dirs(output_root, dry_run=dry_run)
     step_records_path = run_paths.root / "step_records.jsonl"
@@ -787,7 +817,9 @@ def _run_single_experiment(
         raise ValueError(f"Level {level.id} has no valid reference path.")
     optimal_action_count = len(optimal_path)
     max_calls = _effective_max_calls(level, optimal_action_count, max_calls_override)
-    experiment_id = f"{level.id}__thinking_{'true' if thinking_enabled else 'false'}__repeat_{repeat_index:02d}"
+    experiment_id = (
+        f"{level.id}__thinking_{'true' if thinking_enabled else 'false'}__repeat_{repeat_index:02d}"
+    )
 
     tegrastats_path = run_paths.telemetry_dir / f"{experiment_id}.log"
     tegrastats_session = TegraStatsSession(tegrastats_path)
@@ -795,7 +827,9 @@ def _run_single_experiment(
     if telemetry_enabled:
         tegrastats_session.start()
 
-    run_metrics_before = None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+    run_metrics_before = (
+        None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+    )
     current_state = level.start_state
     previous_feedback: str | None = None
     recent_trace: list[str] = []
@@ -860,13 +894,17 @@ def _run_single_experiment(
                     prompt_token_estimate = int(prompt_token_detail["count"])
 
             prompt_token_debug = _tokenize_debug_summary(prompt_token_detail)
-            prompt_dir, response_dir, metrics_dir = _prepare_step_dirs(run_paths, experiment_id, step_index)
+            prompt_dir, response_dir, metrics_dir = _prepare_step_dirs(
+                run_paths, experiment_id, step_index
+            )
             _write_text(prompt_dir / "user_prompt.txt", prompt_text)
             _write_json(prompt_dir / "messages.json", messages)
             if prompt_token_detail is not None:
                 _write_json(prompt_dir / "prompt_token_debug.json", prompt_token_detail)
 
-            metrics_before_text = None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+            metrics_before_text = (
+                None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+            )
             step_seed = seed + step_index - 1
             call_count += 1
             try:
@@ -893,9 +931,13 @@ def _run_single_experiment(
                     )
                 )
             except Exception as exc:
-                metrics_after_text = None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+                metrics_after_text = (
+                    None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+                )
                 metric_values = metrics_delta(metrics_before_text, metrics_after_text)
-                _write_metrics_artifacts(metrics_dir, metrics_before_text, metrics_after_text, metric_values)
+                _write_metrics_artifacts(
+                    metrics_dir, metrics_before_text, metrics_after_text, metric_values
+                )
                 error_type = type(exc).__name__
                 error_message = str(exc)
                 step_record = {
@@ -918,9 +960,16 @@ def _run_single_experiment(
                     "state_after": _state_dict(current_state),
                     "prompt_token_estimate": prompt_token_estimate,
                     "prompt_token_debug": prompt_token_debug,
-                    "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json") if prompt_token_detail is not None else None,
+                    "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json")
+                    if prompt_token_detail is not None
+                    else None,
                     "server_metrics_delta": metric_values,
-                    "artifact_paths": _artifact_paths(prompt_dir, response_dir, metrics_dir, prompt_token_detail is not None),
+                    "artifact_paths": _artifact_paths(
+                        prompt_dir,
+                        response_dir,
+                        metrics_dir,
+                        prompt_token_detail is not None,
+                    ),
                 }
                 write_record(step_records_path, step_record)
                 steps_compact.append(
@@ -937,7 +986,9 @@ def _run_single_experiment(
                 termination_reason = "request_error"
                 break
 
-            metrics_after_text = None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+            metrics_after_text = (
+                None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+            )
             metric_values = metrics_delta(metrics_before_text, metrics_after_text)
             _write_completion_artifacts(
                 response_dir=response_dir,
@@ -983,7 +1034,11 @@ def _run_single_experiment(
             optimal_path_from_state = list(solver.shortest_path(current_state) or ())
             optimal_actions_from_state = solver.optimal_actions(current_state)
             optimal_remaining_before = len(optimal_path_from_state)
-            chosen_action_is_optimal = parse_result["action"] in optimal_actions_from_state if parse_result["action"] else False
+            chosen_action_is_optimal = (
+                parse_result["action"] in optimal_actions_from_state
+                if parse_result["action"]
+                else False
+            )
             if chosen_action_is_optimal:
                 optimal_action_match_count += 1
             elif parse_result["action"] is not None:
@@ -995,7 +1050,9 @@ def _run_single_experiment(
                 state_change_count += 1
             optimal_remaining_after = solver.optimal_action_count(state_after)
             if optimal_remaining_after is not None:
-                closest_remaining_action_count = min(closest_remaining_action_count, optimal_remaining_after)
+                closest_remaining_action_count = min(
+                    closest_remaining_action_count, optimal_remaining_after
+                )
             if goal_reached_after_step:
                 success_reached_exit = True
                 termination_reason = "escaped"
@@ -1048,17 +1105,23 @@ def _run_single_experiment(
                 "state_changed": outcome["state_changed"],
                 "goal_reached_after_step": goal_reached_after_step,
                 "terminal": outcome["terminal"],
-                "termination_reason_if_terminal": termination_reason if outcome["terminal"] or goal_reached_after_step else None,
+                "termination_reason_if_terminal": termination_reason
+                if outcome["terminal"] or goal_reached_after_step
+                else None,
                 "feedback": outcome["message"],
                 "outcome_reason": outcome["reason"],
                 "prompt_token_estimate": prompt_token_estimate,
                 "prompt_token_debug": prompt_token_debug,
-                "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json") if prompt_token_detail is not None else None,
+                "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json")
+                if prompt_token_detail is not None
+                else None,
                 "usage": usage,
                 "latency_ms": completion["latency_ms"],
                 "ttft_ms": completion["ttft_ms"],
                 "ttft_ms_effective": effective_ttft_ms,
-                "ttft_source": "client_stream" if completion["ttft_ms"] is not None else ("server_metrics" if effective_ttft_ms is not None else None),
+                "ttft_source": "client_stream"
+                if completion["ttft_ms"] is not None
+                else ("server_metrics" if effective_ttft_ms is not None else None),
                 "finish_reason": completion["finish_reason"],
                 "content_chars": len(completion["content"]),
                 "reasoning_chars": len(completion["reasoning"]),
@@ -1078,7 +1141,12 @@ def _run_single_experiment(
                 "optimal_path_from_state": optimal_path_from_state,
                 "optimal_action_count_after_step": optimal_remaining_after,
                 "chosen_action_is_optimal": chosen_action_is_optimal,
-                "artifact_paths": _artifact_paths(prompt_dir, response_dir, metrics_dir, prompt_token_detail is not None),
+                "artifact_paths": _artifact_paths(
+                    prompt_dir,
+                    response_dir,
+                    metrics_dir,
+                    prompt_token_detail is not None,
+                ),
             }
             write_record(step_records_path, step_record)
 
@@ -1120,13 +1188,23 @@ def _run_single_experiment(
         if telemetry_enabled:
             tegrastats_session.stop()
 
-    run_metrics_after = None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+    run_metrics_after = (
+        None if dry_run else scrape_metrics(backend["base_url"], backend.get("api_key"))
+    )
     run_metrics_delta = metrics_delta(run_metrics_before, run_metrics_after)
-    telemetry_summary = summarize_tegrastats_log(tegrastats_path) if tegrastats_path.exists() else None
-    telemetry_timeseries_path = write_tegrastats_timeseries(tegrastats_path, tegrastats_session.interval_ms) if tegrastats_path.exists() else None
+    telemetry_summary = (
+        summarize_tegrastats_log(tegrastats_path) if tegrastats_path.exists() else None
+    )
+    telemetry_timeseries_path = (
+        write_tegrastats_timeseries(tegrastats_path, tegrastats_session.interval_ms)
+        if tegrastats_path.exists()
+        else None
+    )
 
     total_latency_ms = round(sum(total_latency_values), 3) if total_latency_values else None
-    avg_call_latency_ms = round(statistics.mean(total_latency_values), 3) if total_latency_values else None
+    avg_call_latency_ms = (
+        round(statistics.mean(total_latency_values), 3) if total_latency_values else None
+    )
     avg_ttft_ms = round(statistics.mean(ttft_values), 3) if ttft_values else None
     unique_state_count = len(visited_counts)
     status = "error" if termination_reason == "request_error" else "completed"
@@ -1153,7 +1231,11 @@ def _run_single_experiment(
         "termination_reason": termination_reason,
         "start_state": _state_dict(level.start_state),
         "final_state": _state_dict(current_state),
-        "exit_position": {"x": level.exit_position[0], "y": level.exit_position[1], "z": level.exit_position[2]},
+        "exit_position": {
+            "x": level.exit_position[0],
+            "y": level.exit_position[1],
+            "z": level.exit_position[2],
+        },
         "call_count": call_count,
         "valid_action_count": valid_action_count,
         "state_change_count": state_change_count,
@@ -1161,12 +1243,17 @@ def _run_single_experiment(
         "optimal_path": list(optimal_path),
         "required_optimal_actions": list(level.required_optimal_actions),
         "closest_remaining_action_count": closest_remaining_action_count,
-        "progress_ratio": round((optimal_action_count - closest_remaining_action_count) / optimal_action_count, 6)
+        "progress_ratio": round(
+            (optimal_action_count - closest_remaining_action_count) / optimal_action_count,
+            6,
+        )
         if optimal_action_count
         else None,
         "call_count_gap_vs_optimal": call_count_gap,
         "state_change_gap_vs_optimal": state_change_gap,
-        "call_efficiency_ratio": round(optimal_action_count / call_count, 6) if call_count and success_reached_exit else None,
+        "call_efficiency_ratio": round(optimal_action_count / call_count, 6)
+        if call_count and success_reached_exit
+        else None,
         "state_change_efficiency_ratio": round(optimal_action_count / state_change_count, 6)
         if state_change_count and success_reached_exit
         else None,
@@ -1199,7 +1286,9 @@ def _run_single_experiment(
     }
 
 
-def _effective_max_calls(level: MazeLevel, optimal_action_count: int, max_calls_override: int | None) -> int:
+def _effective_max_calls(
+    level: MazeLevel, optimal_action_count: int, max_calls_override: int | None
+) -> int:
     if max_calls_override is not None:
         return max_calls_override
     if level.recommended_max_calls is not None:
@@ -1228,7 +1317,9 @@ def _tokenize_debug_summary(detail: dict[str, Any] | None) -> dict[str, Any] | N
     return summary
 
 
-def _prepare_step_dirs(run_paths: Any, experiment_id: str, step_index: int) -> tuple[Path, Path, Path]:
+def _prepare_step_dirs(
+    run_paths: Any, experiment_id: str, step_index: int
+) -> tuple[Path, Path, Path]:
     step_label = f"step_{step_index:04d}"
     prompt_dir = run_paths.prompts_dir / experiment_id / step_label
     response_dir = run_paths.responses_dir / experiment_id / step_label
@@ -1273,7 +1364,10 @@ def _write_completion_artifacts(
         },
     )
     if completion.get("completion_token_fallback_debug") is not None:
-        _write_json(response_dir / "completion_token_fallback_debug.json", completion["completion_token_fallback_debug"])
+        _write_json(
+            response_dir / "completion_token_fallback_debug.json",
+            completion["completion_token_fallback_debug"],
+        )
     _write_metrics_artifacts(metrics_dir, metrics_before_text, metrics_after_text, metric_values)
 
 
@@ -1291,12 +1385,19 @@ def _write_metrics_artifacts(
         _write_json(metrics_dir / "metrics_delta.json", metric_values)
 
 
-def _artifact_paths(prompt_dir: Path, response_dir: Path, metrics_dir: Path, has_prompt_token_debug: bool) -> dict[str, str | None]:
+def _artifact_paths(
+    prompt_dir: Path,
+    response_dir: Path,
+    metrics_dir: Path,
+    has_prompt_token_debug: bool,
+) -> dict[str, str | None]:
     completion_token_fallback_path = response_dir / "completion_token_fallback_debug.json"
     return {
         "prompt_path": str(prompt_dir / "user_prompt.txt"),
         "messages_path": str(prompt_dir / "messages.json"),
-        "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json") if has_prompt_token_debug else None,
+        "prompt_token_debug_path": str(prompt_dir / "prompt_token_debug.json")
+        if has_prompt_token_debug
+        else None,
         "response_path": str(response_dir / "response.txt"),
         "reasoning_path": str(response_dir / "reasoning.txt"),
         "tool_calls_path": str(response_dir / "tool_calls.json"),
@@ -1304,10 +1405,18 @@ def _artifact_paths(prompt_dir: Path, response_dir: Path, metrics_dir: Path, has
         "completion_snapshot_path": str(response_dir / "completion_snapshot.json"),
         "raw_events_path": str(response_dir / "response_events.sse"),
         "raw_event_timeline_path": str(response_dir / "response_events_timeline.jsonl"),
-        "completion_token_fallback_debug_path": str(completion_token_fallback_path) if completion_token_fallback_path.exists() else None,
-        "metrics_before_path": str(metrics_dir / "metrics_before.prom") if (metrics_dir / "metrics_before.prom").exists() else None,
-        "metrics_after_path": str(metrics_dir / "metrics_after.prom") if (metrics_dir / "metrics_after.prom").exists() else None,
-        "metrics_delta_path": str(metrics_dir / "metrics_delta.json") if (metrics_dir / "metrics_delta.json").exists() else None,
+        "completion_token_fallback_debug_path": str(completion_token_fallback_path)
+        if completion_token_fallback_path.exists()
+        else None,
+        "metrics_before_path": str(metrics_dir / "metrics_before.prom")
+        if (metrics_dir / "metrics_before.prom").exists()
+        else None,
+        "metrics_after_path": str(metrics_dir / "metrics_after.prom")
+        if (metrics_dir / "metrics_after.prom").exists()
+        else None,
+        "metrics_delta_path": str(metrics_dir / "metrics_delta.json")
+        if (metrics_dir / "metrics_delta.json").exists()
+        else None,
     }
 
 
@@ -1320,7 +1429,12 @@ def _dry_run_completion(
     thinking_enabled: bool,
     seed: int,
 ) -> dict[str, Any]:
-    usage = {"prompt_tokens": prompt_token_estimate, "completion_tokens": 1, "prompt_tokens_source": "dry_run", "completion_tokens_source": "dry_run"}
+    usage = {
+        "prompt_tokens": prompt_token_estimate,
+        "completion_tokens": 1,
+        "prompt_tokens_source": "dry_run",
+        "completion_tokens_source": "dry_run",
+    }
     content = json.dumps({"action": action}, separators=(",", ":"))
     return {
         "content": content,

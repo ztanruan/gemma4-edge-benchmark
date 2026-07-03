@@ -1,8 +1,16 @@
+# OS / editor
 .DS_Store
+
+# Python
 __pycache__/
-.pytest_cache/
-.venv/
 *.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Generated datasets and staged image corpora are kept local for reproducibility.
 data/source_datasets/
@@ -13,5 +21,7 @@ docs/scenarios/
 outputs/
 
 # Optional local telemetry and scratch files.
-*.log
+# Scoped to the repo root so committed text corpora (data/corpora/**) are never
+# swallowed by a blanket *.log rule.
+/*.log
 *.tmp

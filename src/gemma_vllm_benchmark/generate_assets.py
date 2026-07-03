@@ -448,7 +448,9 @@ def _scenario_doc(scenario: dict[str, Any]) -> str:
     must_include = "\n".join(f"- {item}" for item in scenario["judge"]["must_include"])
     should_avoid = "\n".join(f"- {item}" for item in scenario["judge"]["should_avoid"])
     judge_questions = "\n".join(f"- {item}" for item in scenario["judge"]["judge_questions"])
-    reference_answer = "\n".join(f"- {item}" for item in scenario["judge"].get("reference_answer", []))
+    reference_answer = "\n".join(
+        f"- {item}" for item in scenario["judge"].get("reference_answer", [])
+    )
     context_block = (
         "\n".join(f"- {path}" for path in scenario["context_files"])
         if scenario["context_files"]
@@ -456,14 +458,24 @@ def _scenario_doc(scenario: dict[str, Any]) -> str:
     )
     image_block = ""
     if scenario.get("image_files"):
-        image_block = "\n## Image Files\n\n" + "\n".join(f"- {path}" for path in scenario["image_files"]) + "\n"
+        image_block = (
+            "\n## Image Files\n\n"
+            + "\n".join(f"- {path}" for path in scenario["image_files"])
+            + "\n"
+        )
     language_block = ""
-    if scenario.get("input_language") or scenario.get("expected_output_language") or scenario.get("language_variant"):
+    if (
+        scenario.get("input_language")
+        or scenario.get("expected_output_language")
+        or scenario.get("language_variant")
+    ):
         language_lines = ["\n## Language Expectations\n"]
         if scenario.get("input_language"):
             language_lines.append(f"- Input language: {scenario['input_language']}")
         if scenario.get("expected_output_language"):
-            language_lines.append(f"- Expected output language: {scenario['expected_output_language']}")
+            language_lines.append(
+                f"- Expected output language: {scenario['expected_output_language']}"
+            )
         if scenario.get("language_variant"):
             language_lines.append(f"- Language variant: {scenario['language_variant']}")
         language_block = "\n".join(language_lines) + "\n"
@@ -474,30 +486,38 @@ def _scenario_doc(scenario: dict[str, Any]) -> str:
                     f"### Turn {index}",
                     f"Task: {turn['task']}",
                     "Context Files:",
-                    *[f"- {path}" for path in (turn.get("context_files") or scenario["context_files"])],
+                    *[
+                        f"- {path}"
+                        for path in (turn.get("context_files") or scenario["context_files"])
+                    ],
                     "Response Requirements:",
-                    *[f"- {item}" for item in (turn.get("response_requirements") or scenario["response_requirements"])],
+                    *[
+                        f"- {item}"
+                        for item in (
+                            turn.get("response_requirements") or scenario["response_requirements"]
+                        )
+                    ],
                 ]
             )
             for index, turn in enumerate(scenario["conversation_turns"], start=1)
         )
     else:
         user_task_block = scenario["task"]
-    return f"""# Scenario: {scenario['title']}
+    return f"""# Scenario: {scenario["title"]}
 
-Scenario ID: {scenario['id']}
-Use Case: {scenario['use_case_title']}
-Family: {scenario['family']}
-Mode: {scenario['mode']}
-Scenario Connectivity: {scenario['scenario_connectivity']}
-Execution Mode: {scenario['execution_mode']}
-Context Source: {scenario['context_source']}
-Review Scope: {scenario.get('review_scope', 'single_response')}
-Repeat Count Override: {scenario.get('repeat_count_override', 'default')}
+Scenario ID: {scenario["id"]}
+Use Case: {scenario["use_case_title"]}
+Family: {scenario["family"]}
+Mode: {scenario["mode"]}
+Scenario Connectivity: {scenario["scenario_connectivity"]}
+Execution Mode: {scenario["execution_mode"]}
+Context Source: {scenario["context_source"]}
+Review Scope: {scenario.get("review_scope", "single_response")}
+Repeat Count Override: {scenario.get("repeat_count_override", "default")}
 
 ## Why This Test Exists
 
-{scenario['description']}
+{scenario["description"]}
 
 ## Context Files
 
@@ -564,93 +584,226 @@ def _tool_highlights(tool_results: list[dict[str, Any]]) -> list[str]:
     return highlights
 
 
-def _expected_tool_calls(use_case: UseCaseTemplate) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _expected_tool_calls(
+    use_case: UseCaseTemplate,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     mapping = {
         "offline_knowledge_assistant": (
-            [{"name": "lookup_local_part_stock", "arguments": {"item_code": "STR-KIT-447"}}],
             [
-                {"name": "lookup_local_part_stock", "arguments": {"item_code": "STR-KIT-447"}},
-                {"name": "create_local_maintenance_ticket", "arguments": {"asset_id": "HX-47", "priority": "high"}},
-                {"name": "get_on_shift_technician", "arguments": {"skill": "rotating equipment technician"}},
+                {
+                    "name": "lookup_local_part_stock",
+                    "arguments": {"item_code": "STR-KIT-447"},
+                }
+            ],
+            [
+                {
+                    "name": "lookup_local_part_stock",
+                    "arguments": {"item_code": "STR-KIT-447"},
+                },
+                {
+                    "name": "create_local_maintenance_ticket",
+                    "arguments": {"asset_id": "HX-47", "priority": "high"},
+                },
+                {
+                    "name": "get_on_shift_technician",
+                    "arguments": {"skill": "rotating equipment technician"},
+                },
             ],
         ),
         "field_service_copilot": (
             [{"name": "get_service_history", "arguments": {"site_id": "MCS-D4"}}],
             [
                 {"name": "get_service_history", "arguments": {"site_id": "MCS-D4"}},
-                {"name": "lookup_part_eta", "arguments": {"part_number": "CBL-RS485-3M"}},
-                {"name": "create_visit_brief", "arguments": {"site_id": "MCS-D4", "priority": "medium"}},
-                {"name": "get_regional_service_lead", "arguments": {"territory": "west"}},
+                {
+                    "name": "lookup_part_eta",
+                    "arguments": {"part_number": "CBL-RS485-3M"},
+                },
+                {
+                    "name": "create_visit_brief",
+                    "arguments": {"site_id": "MCS-D4", "priority": "medium"},
+                },
+                {
+                    "name": "get_regional_service_lead",
+                    "arguments": {"territory": "west"},
+                },
             ],
         ),
         "industrial_maintenance_agent": (
             [{"name": "get_alarm_snapshot", "arguments": {"asset_id": "PX-22"}}],
             [
                 {"name": "get_alarm_snapshot", "arguments": {"asset_id": "PX-22"}},
-                {"name": "check_spare_availability", "arguments": {"part_number": "WH-22-HARNESS"}},
-                {"name": "open_work_order", "arguments": {"asset_id": "PX-22", "priority": "urgent"}},
-                {"name": "get_owner_contact", "arguments": {"team": "automation-maintenance"}},
+                {
+                    "name": "check_spare_availability",
+                    "arguments": {"part_number": "WH-22-HARNESS"},
+                },
+                {
+                    "name": "open_work_order",
+                    "arguments": {"asset_id": "PX-22", "priority": "urgent"},
+                },
+                {
+                    "name": "get_owner_contact",
+                    "arguments": {"team": "automation-maintenance"},
+                },
             ],
         ),
         "customer_support_assistant": (
-            [{"name": "get_account_entitlements", "arguments": {"account_id": "AC-7781"}}],
             [
-                {"name": "get_account_entitlements", "arguments": {"account_id": "AC-7781"}},
-                {"name": "lookup_provisioning_status", "arguments": {"account_id": "AC-7781"}},
-                {"name": "create_support_escalation", "arguments": {"account_id": "AC-7781", "priority": "high"}},
-                {"name": "get_queue_owner", "arguments": {"queue": "identity-escalations"}},
+                {
+                    "name": "get_account_entitlements",
+                    "arguments": {"account_id": "AC-7781"},
+                }
+            ],
+            [
+                {
+                    "name": "get_account_entitlements",
+                    "arguments": {"account_id": "AC-7781"},
+                },
+                {
+                    "name": "lookup_provisioning_status",
+                    "arguments": {"account_id": "AC-7781"},
+                },
+                {
+                    "name": "create_support_escalation",
+                    "arguments": {"account_id": "AC-7781", "priority": "high"},
+                },
+                {
+                    "name": "get_queue_owner",
+                    "arguments": {"queue": "identity-escalations"},
+                },
             ],
         ),
         "retail_warehouse_operations": (
             [{"name": "lookup_inventory", "arguments": {"sku": "SKU-A19-CASE"}}],
             [
                 {"name": "lookup_inventory", "arguments": {"sku": "SKU-A19-CASE"}},
-                {"name": "create_replenishment_task", "arguments": {"sku": "SKU-A19-CASE", "destination": "B-17", "priority": "high"}},
+                {
+                    "name": "create_replenishment_task",
+                    "arguments": {
+                        "sku": "SKU-A19-CASE",
+                        "destination": "B-17",
+                        "priority": "high",
+                    },
+                },
                 {"name": "get_shift_lead", "arguments": {"zone": "forward-pick"}},
             ],
         ),
         "soc_incident_triage": (
-            [{"name": "get_host_findings", "arguments": {"host": "finance-laptop-227"}}],
             [
-                {"name": "get_host_findings", "arguments": {"host": "finance-laptop-227"}},
-                {"name": "isolate_host", "arguments": {"host": "finance-laptop-227", "reason": "suspicious token activity"}},
-                {"name": "create_incident_ticket", "arguments": {"host": "finance-laptop-227", "severity": "high"}},
+                {
+                    "name": "get_host_findings",
+                    "arguments": {"host": "finance-laptop-227"},
+                }
+            ],
+            [
+                {
+                    "name": "get_host_findings",
+                    "arguments": {"host": "finance-laptop-227"},
+                },
+                {
+                    "name": "isolate_host",
+                    "arguments": {
+                        "host": "finance-laptop-227",
+                        "reason": "suspicious token activity",
+                    },
+                },
+                {
+                    "name": "create_incident_ticket",
+                    "arguments": {"host": "finance-laptop-227", "severity": "high"},
+                },
                 {"name": "get_incident_commander", "arguments": {"severity": "high"}},
             ],
         ),
         "healthcare_admin_assistant": (
-            [{"name": "lookup_patient_eligibility", "arguments": {"patient_id": "PT-4102"}}],
             [
-                {"name": "lookup_patient_eligibility", "arguments": {"patient_id": "PT-4102"}},
-                {"name": "create_prior_auth_packet", "arguments": {"patient_id": "PT-4102", "study": "lumbar MRI"}},
-                {"name": "schedule_followup", "arguments": {"patient_id": "PT-4102", "reason": "prior auth follow-up"}},
+                {
+                    "name": "lookup_patient_eligibility",
+                    "arguments": {"patient_id": "PT-4102"},
+                }
+            ],
+            [
+                {
+                    "name": "lookup_patient_eligibility",
+                    "arguments": {"patient_id": "PT-4102"},
+                },
+                {
+                    "name": "create_prior_auth_packet",
+                    "arguments": {"patient_id": "PT-4102", "study": "lumbar MRI"},
+                },
+                {
+                    "name": "schedule_followup",
+                    "arguments": {
+                        "patient_id": "PT-4102",
+                        "reason": "prior auth follow-up",
+                    },
+                },
                 {"name": "get_referral_owner", "arguments": {"team": "referral-desk"}},
             ],
         ),
         "vehicle_robot_operator_assistant": (
-            [{"name": "read_local_diag_snapshot", "arguments": {"vehicle_id": "YBT7-03"}}],
             [
-                {"name": "read_local_diag_snapshot", "arguments": {"vehicle_id": "YBT7-03"}},
-                {"name": "queue_service_stop", "arguments": {"vehicle_id": "YBT7-03", "reason": "steering encoder disagreement"}},
-                {"name": "log_operator_report", "arguments": {"vehicle_id": "YBT7-03", "summary": "E214 steering encoder disagreement"}},
-                {"name": "get_robotics_supervisor", "arguments": {"yard": "Portside Logistics Yard"}},
+                {
+                    "name": "read_local_diag_snapshot",
+                    "arguments": {"vehicle_id": "YBT7-03"},
+                }
+            ],
+            [
+                {
+                    "name": "read_local_diag_snapshot",
+                    "arguments": {"vehicle_id": "YBT7-03"},
+                },
+                {
+                    "name": "queue_service_stop",
+                    "arguments": {
+                        "vehicle_id": "YBT7-03",
+                        "reason": "steering encoder disagreement",
+                    },
+                },
+                {
+                    "name": "log_operator_report",
+                    "arguments": {
+                        "vehicle_id": "YBT7-03",
+                        "summary": "E214 steering encoder disagreement",
+                    },
+                },
+                {
+                    "name": "get_robotics_supervisor",
+                    "arguments": {"yard": "Portside Logistics Yard"},
+                },
             ],
         ),
         "document_processing_pipeline": (
             [{"name": "validate_vendor", "arguments": {"vendor_id": "V-1108"}}],
             [
                 {"name": "validate_vendor", "arguments": {"vendor_id": "V-1108"}},
-                {"name": "submit_extracted_fields", "arguments": {"document_id": "INV-INTAKE", "po_number": "PO-45811"}},
-                {"name": "route_exception_review", "arguments": {"document_id": "INV-INTAKE", "reason": "tolerance exceeded"}},
+                {
+                    "name": "submit_extracted_fields",
+                    "arguments": {"document_id": "INV-INTAKE", "po_number": "PO-45811"},
+                },
+                {
+                    "name": "route_exception_review",
+                    "arguments": {
+                        "document_id": "INV-INTAKE",
+                        "reason": "tolerance exceeded",
+                    },
+                },
                 {"name": "get_ap_owner", "arguments": {"queue": "ap-exceptions"}},
             ],
         ),
         "developer_edge_copilot": (
             [{"name": "search_service_logs", "arguments": {"service": "bridge-sync"}}],
             [
-                {"name": "search_service_logs", "arguments": {"service": "bridge-sync"}},
-                {"name": "read_runtime_config", "arguments": {"service": "bridge-sync"}},
-                {"name": "create_change_ticket", "arguments": {"service": "bridge-sync", "priority": "high"}},
+                {
+                    "name": "search_service_logs",
+                    "arguments": {"service": "bridge-sync"},
+                },
+                {
+                    "name": "read_runtime_config",
+                    "arguments": {"service": "bridge-sync"},
+                },
+                {
+                    "name": "create_change_ticket",
+                    "arguments": {"service": "bridge-sync", "priority": "high"},
+                },
                 {"name": "get_platform_owner", "arguments": {"team": "edge-platform"}},
             ],
         ),
@@ -693,8 +846,17 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "tool_results": [],
             "expected_tool_calls": [],
             "judge": {
-                "must_include": [first_check, second_check, use_case.do_not, use_case.escalate_when],
-                "should_avoid": ["unsupported claims", "invented procedures", "generic advice detached from the provided context"],
+                "must_include": [
+                    first_check,
+                    second_check,
+                    use_case.do_not,
+                    use_case.escalate_when,
+                ],
+                "should_avoid": [
+                    "unsupported claims",
+                    "invented procedures",
+                    "generic advice detached from the provided context",
+                ],
                 "judge_questions": [
                     "Does the answer stay grounded in the supplied materials?",
                     "Does it identify the prohibited action clearly?",
@@ -726,8 +888,17 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "tool_results": [],
             "expected_tool_calls": [],
             "judge": {
-                "must_include": [use_case.issue, first_check, use_case.do_not, use_case.escalate_when],
-                "should_avoid": ["missing the main issue", "missing the next step", "adding unsupported background"],
+                "must_include": [
+                    use_case.issue,
+                    first_check,
+                    use_case.do_not,
+                    use_case.escalate_when,
+                ],
+                "should_avoid": [
+                    "missing the main issue",
+                    "missing the next step",
+                    "adding unsupported background",
+                ],
                 "judge_questions": [
                     "Does the summary capture the core issue accurately?",
                     "Does it preserve the operational risk or prohibited action?",
@@ -748,7 +919,8 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "max_context_tokens": max_context_tokens,
             "description": "Tests whether the model can turn text evidence into structured JSON with minimal hallucination.",
             "context_files": common_context,
-            "task": use_case.extraction_request + f" Required keys: {', '.join(use_case.extraction_fields)}.",
+            "task": use_case.extraction_request
+            + f" Required keys: {', '.join(use_case.extraction_fields)}.",
             "response_requirements": [
                 "Return JSON only.",
                 "Use null for unknown values.",
@@ -760,7 +932,11 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "expected_tool_calls": [],
             "judge": {
                 "must_include": use_case.extraction_fields,
-                "should_avoid": ["non-JSON output", "invented fields", "fabricated values not grounded in context"],
+                "should_avoid": [
+                    "non-JSON output",
+                    "invented fields",
+                    "fabricated values not grounded in context",
+                ],
                 "judge_questions": [
                     "Is the output valid structured JSON?",
                     "Are unsupported fields left null instead of invented?",
@@ -792,8 +968,18 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "tool_results": [],
             "expected_tool_calls": [],
             "judge": {
-                "must_include": [first_check, second_check, third_check, use_case.do_not, use_case.escalate_when],
-                "should_avoid": ["ignoring the history archive", "hallucinating extra workflow steps", "proposing the prohibited shortcut"],
+                "must_include": [
+                    first_check,
+                    second_check,
+                    third_check,
+                    use_case.do_not,
+                    use_case.escalate_when,
+                ],
+                "should_avoid": [
+                    "ignoring the history archive",
+                    "hallucinating extra workflow steps",
+                    "proposing the prohibited shortcut",
+                ],
                 "judge_questions": [
                     "Does the answer synthesize information from multiple documents rather than one line item?",
                     "Does it produce a minimum safe plan rather than generic advice?",
@@ -825,8 +1011,14 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "tool_results": [],
             "expected_tool_calls": [],
             "judge": {
-                "must_include": ["the context is insufficient or does not specify the answer", use_case.unsupported_reason],
-                "should_avoid": ["pretending the docs contain a policy they do not contain", "confident unsupported recommendations"],
+                "must_include": [
+                    "the context is insufficient or does not specify the answer",
+                    use_case.unsupported_reason,
+                ],
+                "should_avoid": [
+                    "pretending the docs contain a policy they do not contain",
+                    "confident unsupported recommendations",
+                ],
                 "judge_questions": [
                     "Does the answer explicitly admit that the provided context is insufficient?",
                     "Does it avoid inventing a policy or permission?",
@@ -855,13 +1047,32 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             ],
             "generation_profile": "gemma_agentic",
             "tools": [single_tool_schema],
-            "tool_results": [{"name": use_case.tools[0].name, "response": use_case.tool_single_result}],
+            "tool_results": [
+                {
+                    "name": use_case.tools[0].name,
+                    "response": use_case.tool_single_result,
+                }
+            ],
             "expected_tool_calls": expected_single,
             "max_agent_turns": 2,
             "judge": {
-                "must_include": [f"{use_case.tools[0].name} result is used correctly", first_check]
-                + _tool_highlights([{"name": use_case.tools[0].name, "response": use_case.tool_single_result}]),
-                "should_avoid": ["ignoring the tool result", "hallucinating unavailable stock", "skipping the next operational action"],
+                "must_include": [
+                    f"{use_case.tools[0].name} result is used correctly",
+                    first_check,
+                ]
+                + _tool_highlights(
+                    [
+                        {
+                            "name": use_case.tools[0].name,
+                            "response": use_case.tool_single_result,
+                        }
+                    ]
+                ),
+                "should_avoid": [
+                    "ignoring the tool result",
+                    "hallucinating unavailable stock",
+                    "skipping the next operational action",
+                ],
                 "judge_questions": [
                     "Did the model choose the correct tool for the question?",
                     "Does the final answer incorporate the returned tool result accurately?",
@@ -894,8 +1105,13 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
             "expected_tool_calls": expected_multi,
             "max_agent_turns": max(4, len(expected_multi) + 1),
             "judge": {
-                "must_include": _tool_highlights(use_case.tool_multi_results[:3]) + [f"follow-up owner: {use_case.secondary_contact_name}"],
-                "should_avoid": ["dropping one of the major tool outcomes", "inventing different IDs or owners", "missing the follow-up owner"],
+                "must_include": _tool_highlights(use_case.tool_multi_results[:3])
+                + [f"follow-up owner: {use_case.secondary_contact_name}"],
+                "should_avoid": [
+                    "dropping one of the major tool outcomes",
+                    "inventing different IDs or owners",
+                    "missing the follow-up owner",
+                ],
                 "judge_questions": [
                     "Does the response integrate the important outputs from multiple tools?",
                     "Does it surface the created ticket, case, or task identifiers when available?",
@@ -906,7 +1122,9 @@ def _scenario_templates(use_case: UseCaseTemplate, bundle: dict[str, Any]) -> li
     ]
 
 
-def _advanced_scenario_templates(use_case_map: dict[str, UseCaseTemplate]) -> tuple[dict[str, str], list[dict[str, Any]]]:
+def _advanced_scenario_templates(
+    use_case_map: dict[str, UseCaseTemplate],
+) -> tuple[dict[str, str], list[dict[str, Any]]]:
     offline = use_case_map["offline_knowledge_assistant"]
     industrial = use_case_map["industrial_maintenance_agent"]
     field_service = use_case_map["field_service_copilot"]
@@ -1060,7 +1278,7 @@ Sichere Sofortschritte:
 
 Verboten: Drehmomentgrenzen nicht deaktivieren, um den Start zu erzwingen.
 """,
-        advanced("multilingual", "industrial_handover_de.md"): f"""# Schichtnotiz
+        advanced("multilingual", "industrial_handover_de.md"): """# Schichtnotiz
 
 - Der Alarm trat nach dem Greiferwechsel erneut auf.
 - Eine Eskalation ist noetig, wenn Alarm 44 nach der Langsamfahrt mit bestaetigtem Profil erneut erscheint.
@@ -1074,7 +1292,9 @@ NOTE_CLINIQUE_JOINTE=oui
 NUMERO_FAX=
 STATUT_AUTORISATION=
 """,
-        advanced("multilingual", "healthcare_checklist_fr.md"): """# Liste de controle d'autorisation
+        advanced(
+            "multilingual", "healthcare_checklist_fr.md"
+        ): """# Liste de controle d'autorisation
 
 Champs obligatoires pour la note de rappel:
 - identifiant du patient
@@ -1161,7 +1381,11 @@ No hay aprobacion para tocar tablas internas.
             "review_scope": "single_response",
             "max_context_tokens": 65536,
             "description": "Tests whether the model notices conflicting documents, states the conflict explicitly, and explains which source should be trusted.",
-            "context_files": offline_common + [advanced("conflict", "pump_manual_override.md"), advanced("conflict", "shift_note_latest.md")],
+            "context_files": offline_common
+            + [
+                advanced("conflict", "pump_manual_override.md"),
+                advanced("conflict", "shift_note_latest.md"),
+            ],
             "task": "The legacy repair note suggests replacing the seal, but the latest shift note says the seal was replaced yesterday. What should the operator do next, and which source should guide the decision?",
             "response_requirements": [
                 "Explicitly state that the documents conflict.",
@@ -1350,7 +1574,12 @@ No hay aprobacion para tocar tablas internas.
             "review_scope": "single_response",
             "max_context_tokens": 65536,
             "description": "Tests whether the answer can chain facts across multiple documents rather than relying on any single file.",
-            "context_files": offline_common + [advanced("multihop", "asset_to_part.md"), advanced("multihop", "vendor_map.md"), advanced("multihop", "lead_times.md")],
+            "context_files": offline_common
+            + [
+                advanced("multihop", "asset_to_part.md"),
+                advanced("multihop", "vendor_map.md"),
+                advanced("multihop", "lead_times.md"),
+            ],
             "task": f"If local stock is exhausted, how long will it take to get the replacement kit for {offline.asset_id} and how do you know?",
             "response_requirements": [
                 "Explain the reasoning chain briefly.",
@@ -1444,7 +1673,8 @@ No hay aprobacion para tocar tablas internas.
             "review_scope": "single_response",
             "max_context_tokens": 65536,
             "description": "Tests whether the model answers the known parts of a partially complete packet while clearly flagging the missing fields.",
-            "context_files": healthcare_common + [advanced("abstention", "partial_auth_packet.txt")],
+            "context_files": healthcare_common
+            + [advanced("abstention", "partial_auth_packet.txt")],
             "task": "Prepare a callback note with the patient identifier, payer, requested study, fax number, and authorization status based only on the provided materials.",
             "response_requirements": [
                 "Answer what can be answered from the provided materials.",
@@ -1542,7 +1772,10 @@ No hay aprobacion para tocar tablas internas.
             "language_variant": "same_language_grounding",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can read Spanish operational documents, stay grounded in them, and answer in Spanish without dropping the core operational facts.",
-            "context_files": [advanced("multilingual", "offline_manual_es.md"), advanced("multilingual", "offline_shift_note_es.md")],
+            "context_files": [
+                advanced("multilingual", "offline_manual_es.md"),
+                advanced("multilingual", "offline_shift_note_es.md"),
+            ],
             "task": "Usando solo los documentos proporcionados, indica cual es la primera accion aprobada, que accion esta prohibida y cuando se debe escalar el caso.",
             "response_requirements": [
                 "Responde solo en espanol.",
@@ -1592,7 +1825,10 @@ No hay aprobacion para tocar tablas internas.
             "language_variant": "same_language_summarization",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can summarize German maintenance material into a structured German handoff note without losing the safe recovery path.",
-            "context_files": [advanced("multilingual", "industrial_alarm_de.md"), advanced("multilingual", "industrial_handover_de.md")],
+            "context_files": [
+                advanced("multilingual", "industrial_alarm_de.md"),
+                advanced("multilingual", "industrial_handover_de.md"),
+            ],
             "task": "Erstelle eine kurze Uebergabe mit den Abschnitten Situation, Sofortmassnahmen, Risiko und Naechster Schritt.",
             "response_requirements": [
                 "Antworte auf Deutsch.",
@@ -1642,7 +1878,10 @@ No hay aprobacion para tocar tablas internas.
             "language_variant": "same_language_extraction",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can read French administrative materials and produce a grounded JSON record without hallucinating missing fields.",
-            "context_files": [advanced("multilingual", "healthcare_packet_fr.txt"), advanced("multilingual", "healthcare_checklist_fr.md")],
+            "context_files": [
+                advanced("multilingual", "healthcare_packet_fr.txt"),
+                advanced("multilingual", "healthcare_checklist_fr.md"),
+            ],
             "task": "A partir des documents fournis, retourne uniquement un objet JSON avec les cles suivantes: patient_id, payer, requested_study, fax_number, authorization_status, missing_items.",
             "response_requirements": [
                 "Retourne uniquement du JSON valide.",
@@ -1694,7 +1933,10 @@ No hay aprobacion para tocar tablas internas.
             "language_variant": "cross_lingual_grounding",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can ground on Portuguese field-service documents and answer accurately in English.",
-            "context_files": [advanced("multilingual", "field_service_manual_pt.md"), advanced("multilingual", "field_service_note_pt.md")],
+            "context_files": [
+                advanced("multilingual", "field_service_manual_pt.md"),
+                advanced("multilingual", "field_service_note_pt.md"),
+            ],
             "task": "Using only the provided documents, answer in English: what should the technician check first, what should not be replaced yet, and when should the issue be escalated?",
             "response_requirements": [
                 "Answer only in English.",
@@ -1744,7 +1986,10 @@ No hay aprobacion para tocar tablas internas.
             "language_variant": "code_switching",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can follow a mixed English-Spanish support interaction and return a grounded answer in Spanish.",
-            "context_files": [advanced("multilingual", "support_policy_mix_en_es.md"), advanced("multilingual", "support_case_note_mix_en_es.md")],
+            "context_files": [
+                advanced("multilingual", "support_policy_mix_en_es.md"),
+                advanced("multilingual", "support_case_note_mix_en_es.md"),
+            ],
             "task": "El cliente ya verified el domain pero el login sigue failing. Responde en espanol: cual es el siguiente paso soportado y que accion esta prohibida?",
             "response_requirements": [
                 "Responde solo en espanol.",
@@ -1801,17 +2046,24 @@ No hay aprobacion para tocar tablas internas.
                 {
                     "task": "What is the first thing I should check on PX-22 after alarm 44 during startup?",
                     "context_files": industrial_common,
-                    "response_requirements": ["Answer with the first approved check and the prohibited shortcut."],
+                    "response_requirements": [
+                        "Answer with the first approved check and the prohibited shortcut."
+                    ],
                 },
                 {
                     "task": "I inspected the wrist harness and it looks fine. What should I do next?",
                     "context_files": industrial_common,
-                    "response_requirements": ["Use the prior turn context and move to the next safe check."],
+                    "response_requirements": [
+                        "Use the prior turn context and move to the next safe check."
+                    ],
                 },
                 {
                     "task": "I also verified the profile, then alarm 44 came back during low-speed homing. Should I escalate now?",
-                    "context_files": industrial_common + [advanced("temporal", "px22_timeline.log")],
-                    "response_requirements": ["Use the prior turns and state clearly whether escalation is now warranted."],
+                    "context_files": industrial_common
+                    + [advanced("temporal", "px22_timeline.log")],
+                    "response_requirements": [
+                        "Use the prior turns and state clearly whether escalation is now warranted."
+                    ],
                 },
             ],
             "generation_profile": "gemma_standard",
@@ -1872,9 +2124,11 @@ No hay aprobacion para tocar tablas internas.
                     "response_requirements": ["Answer only from the support context."],
                 },
                 {
-                    "task": f"Back to the pump: what was that part number again, and where is it stored?",
+                    "task": "Back to the pump: what was that part number again, and where is it stored?",
                     "context_files": offline_common,
-                    "response_requirements": ["Return to the pump context without using support facts."],
+                    "response_requirements": [
+                        "Return to the pump context without using support facts."
+                    ],
                 },
             ],
             "generation_profile": "gemma_standard",
@@ -1926,8 +2180,18 @@ No hay aprobacion para tocar tablas internas.
             ],
             "generation_profile": "gemma_agentic",
             "tools": [_tool_to_json_schema(industrial.tools[0])],
-            "tool_results": [{"name": industrial.tools[0].name, "response": {"error": "service unavailable"}}],
-            "expected_tool_calls": [{"name": industrial.tools[0].name, "arguments": {"asset_id": industrial.asset_id}}],
+            "tool_results": [
+                {
+                    "name": industrial.tools[0].name,
+                    "response": {"error": "service unavailable"},
+                }
+            ],
+            "expected_tool_calls": [
+                {
+                    "name": industrial.tools[0].name,
+                    "arguments": {"asset_id": industrial.asset_id},
+                }
+            ],
             "max_agent_turns": 2,
             "judge": {
                 "reference_answer": [
@@ -2105,7 +2369,11 @@ No hay aprobacion para tocar tablas internas.
             "review_scope": "single_response",
             "max_context_tokens": 65536,
             "description": "Tests whether the model can summarize for an external audience without exposing sensitive data found in the source packet.",
-            "context_files": healthcare_common + [advanced("redaction", "external_summary_policy.md"), advanced("redaction", "patient_packet.txt")],
+            "context_files": healthcare_common
+            + [
+                advanced("redaction", "external_summary_policy.md"),
+                advanced("redaction", "patient_packet.txt"),
+            ],
             "task": "Write a short external-facing summary of the authorization issue for a payer outreach vendor.",
             "response_requirements": [
                 "Follow the external summary policy.",
@@ -2150,7 +2418,10 @@ No hay aprobacion para tocar tablas internas.
         (
             "level_3",
             "List the issue, the first check, and the escalation condition.",
-            ["Return exactly three bullet points.", "Include the issue, first check, and escalation condition."],
+            [
+                "Return exactly three bullet points.",
+                "Include the issue, first check, and escalation condition.",
+            ],
             ["Issue, first check, and escalation condition are all present."],
         ),
         (
@@ -2162,7 +2433,11 @@ No hay aprobacion para tocar tablas internas.
         (
             "level_8",
             "Return JSON with keys issue, checks, prohibited_action, escalation_condition, and contact. Each string value must stay under 18 words.",
-            ["Return JSON only.", "Do not add extra keys.", "Respect the word limit for each string value."],
+            [
+                "Return JSON only.",
+                "Do not add extra keys.",
+                "Respect the word limit for each string value.",
+            ],
             ["Valid JSON with the required keys and concise values."],
         ),
     ]
@@ -2185,7 +2460,9 @@ No hay aprobacion para tocar tablas internas.
                 "context_files": industrial_common,
                 "task": task,
                 "response_requirements": response_requirements,
-                "generation_profile": "gemma_structured" if variant_id == "level_8" else "gemma_standard",
+                "generation_profile": "gemma_structured"
+                if variant_id == "level_8"
+                else "gemma_standard",
                 "tools": [],
                 "tool_results": [],
                 "expected_tool_calls": [],
@@ -2211,11 +2488,31 @@ No hay aprobacion para tocar tablas internas.
         )
 
     format_variants = [
-        ("markdown_table", "Return the invoice findings as a Markdown table.", ["Return a Markdown table only."]),
-        ("nested_json", "Return the invoice findings as nested JSON with objects invoice, variance, and action.", ["Return valid JSON only."]),
-        ("numbered_checklist", "Return the invoice findings as a numbered checklist.", ["Return a numbered checklist."]),
-        ("key_value_pairs", "Return the invoice findings as key-value pairs.", ["Return one key-value pair per line."]),
-        ("xml_snippet", "Return the invoice findings as a small XML snippet.", ["Return valid XML only."]),
+        (
+            "markdown_table",
+            "Return the invoice findings as a Markdown table.",
+            ["Return a Markdown table only."],
+        ),
+        (
+            "nested_json",
+            "Return the invoice findings as nested JSON with objects invoice, variance, and action.",
+            ["Return valid JSON only."],
+        ),
+        (
+            "numbered_checklist",
+            "Return the invoice findings as a numbered checklist.",
+            ["Return a numbered checklist."],
+        ),
+        (
+            "key_value_pairs",
+            "Return the invoice findings as key-value pairs.",
+            ["Return one key-value pair per line."],
+        ),
+        (
+            "xml_snippet",
+            "Return the invoice findings as a small XML snippet.",
+            ["Return valid XML only."],
+        ),
     ]
     for variant_id, task, response_requirements in format_variants:
         advanced_scenarios.append(
@@ -2234,9 +2531,12 @@ No hay aprobacion para tocar tablas internas.
                 "max_context_tokens": 65536,
                 "description": "Tests which requested output structures the model can follow reliably for a fixed extraction task.",
                 "context_files": document_common + [advanced("numerical", "invoice_line_items.md")],
-                "task": task + " Include invoice subtotal, approved subtotal, variance, and final routing decision.",
+                "task": task
+                + " Include invoice subtotal, approved subtotal, variance, and final routing decision.",
                 "response_requirements": response_requirements,
-                "generation_profile": "gemma_structured" if variant_id in {"nested_json", "xml_snippet"} else "gemma_standard",
+                "generation_profile": "gemma_structured"
+                if variant_id in {"nested_json", "xml_snippet"}
+                else "gemma_standard",
                 "tools": [],
                 "tool_results": [],
                 "expected_tool_calls": [],
@@ -2265,9 +2565,19 @@ No hay aprobacion para tocar tablas internas.
 
     length_variants = [
         ("one_sentence", "Answer in one sentence.", ["Return exactly one sentence."]),
-        ("three_bullets", "Answer in exactly 3 bullet points.", ["Return exactly 3 bullet points."]),
+        (
+            "three_bullets",
+            "Answer in exactly 3 bullet points.",
+            ["Return exactly 3 bullet points."],
+        ),
         ("under_50_words", "Answer in under 50 words.", ["Stay under 50 words."]),
-        ("detailed", "Provide a detailed explanation.", ["Provide a detailed explanation with the first checks, prohibited action, and escalation trigger."]),
+        (
+            "detailed",
+            "Provide a detailed explanation.",
+            [
+                "Provide a detailed explanation with the first checks, prohibited action, and escalation trigger."
+            ],
+        ),
     ]
     for variant_id, task, response_requirements in length_variants:
         advanced_scenarios.append(
@@ -2286,7 +2596,8 @@ No hay aprobacion para tocar tablas internas.
                 "max_context_tokens": 65536,
                 "description": "Tests whether the model can fit the same grounded answer into different response-length constraints.",
                 "context_files": support_common,
-                "task": task + " Using only the support documents, answer what support should verify first, what not to suggest, and when to escalate.",
+                "task": task
+                + " Using only the support documents, answer what support should verify first, what not to suggest, and when to escalate.",
                 "response_requirements": response_requirements,
                 "generation_profile": "gemma_standard",
                 "tools": [],
@@ -2395,19 +2706,27 @@ def generate(project_root: Path, image_tier: str = "medium") -> None:
 
         fixtures_dir = tool_fixtures_root / use_case.slug
         fixtures_dir.mkdir(parents=True, exist_ok=True)
-        (fixtures_dir / "single_tool.json").write_text(json.dumps(use_case.tool_single_result, indent=2), encoding="utf-8")
-        (fixtures_dir / "multi_tool.json").write_text(json.dumps(use_case.tool_multi_results, indent=2), encoding="utf-8")
+        (fixtures_dir / "single_tool.json").write_text(
+            json.dumps(use_case.tool_single_result, indent=2), encoding="utf-8"
+        )
+        (fixtures_dir / "multi_tool.json").write_text(
+            json.dumps(use_case.tool_multi_results, indent=2), encoding="utf-8"
+        )
 
         for scenario in _scenario_templates(use_case, bundle):
             manifest["scenarios"].append(scenario)
-            (docs_scenarios_root / f"{scenario['id']}.md").write_text(_scenario_doc(scenario), encoding="utf-8")
+            (docs_scenarios_root / f"{scenario['id']}.md").write_text(
+                _scenario_doc(scenario), encoding="utf-8"
+            )
 
     image_bundle = stage_image_benchmarks(project_root, image_tier=image_tier)
     for use_case_id, use_case_doc in image_bundle["use_case_docs"].items():
         (docs_use_cases_root / f"{use_case_id}.md").write_text(use_case_doc, encoding="utf-8")
     for scenario in image_bundle["scenarios"]:
         manifest["scenarios"].append(scenario)
-        (docs_scenarios_root / f"{scenario['id']}.md").write_text(_scenario_doc(scenario), encoding="utf-8")
+        (docs_scenarios_root / f"{scenario['id']}.md").write_text(
+            _scenario_doc(scenario), encoding="utf-8"
+        )
 
     advanced_documents, advanced_scenarios = _advanced_scenario_templates(use_case_map)
     for rel_path, contents in advanced_documents.items():
@@ -2416,18 +2735,57 @@ def generate(project_root: Path, image_tier: str = "medium") -> None:
         target.write_text(contents, encoding="utf-8")
     for scenario in advanced_scenarios:
         manifest["scenarios"].append(scenario)
-        (docs_scenarios_root / f"{scenario['id']}.md").write_text(_scenario_doc(scenario), encoding="utf-8")
+        (docs_scenarios_root / f"{scenario['id']}.md").write_text(
+            _scenario_doc(scenario), encoding="utf-8"
+        )
 
-    (benchmarks_root / "manifest.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    (benchmarks_root / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8"
+    )
 
     generation_profiles = {
-        "gemma_standard": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_structured": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_agentic": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_long_context": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_image_classification": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_clock_time_reading": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
-        "gemma_image_text_extraction": {"temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 2096},
+        "gemma_standard": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_structured": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_agentic": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_long_context": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_image_classification": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_clock_time_reading": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
+        "gemma_image_text_extraction": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 64,
+            "max_tokens": 2096,
+        },
     }
     (project_root / "configs" / "generation_profiles.yaml").write_text(
         yaml.safe_dump(generation_profiles, sort_keys=False),
@@ -2455,17 +2813,17 @@ def generate(project_root: Path, image_tier: str = "medium") -> None:
 
     def _common_launch(max_soft_tokens: int) -> str:
         return (
-        f"vllm serve {model_id} "
-        f"--max-model-len 65536 "
-        f"--gpu-memory-utilization 0.8 "
-        f"--generation-config vllm "
-        f"--reasoning-parser gemma4 "
-        f"--enable-auto-tool-choice "
-        f"--tool-call-parser gemma4 "
-        f"--chat-template examples/tool_chat_template_gemma4.jinja "
-        f"""--mm-processor-kwargs '{{"max_soft_tokens": {max_soft_tokens}}}' """
-        f"--limit-mm-per-prompt image=1 "
-        f"--allowed-local-media-path {project_root}"
+            f"vllm serve {model_id} "
+            f"--max-model-len 65536 "
+            f"--gpu-memory-utilization 0.8 "
+            f"--generation-config vllm "
+            f"--reasoning-parser gemma4 "
+            f"--enable-auto-tool-choice "
+            f"--tool-call-parser gemma4 "
+            f"--chat-template examples/tool_chat_template_gemma4.jinja "
+            f"""--mm-processor-kwargs '{{"max_soft_tokens": {max_soft_tokens}}}' """
+            f"--limit-mm-per-prompt image=1 "
+            f"--allowed-local-media-path {project_root}"
         )
 
     common_launch = _common_launch(image_soft_tokens)
@@ -2527,7 +2885,9 @@ def generate(project_root: Path, image_tier: str = "medium") -> None:
             ),
         }
     for filename, backend_cfg in backend_profiles.items():
-        (configs_backends_root / filename).write_text(yaml.safe_dump(backend_cfg, sort_keys=False), encoding="utf-8")
+        (configs_backends_root / filename).write_text(
+            yaml.safe_dump(backend_cfg, sort_keys=False), encoding="utf-8"
+        )
 
     judge_template = """# LLM Judge Packet Template
 

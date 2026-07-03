@@ -25,8 +25,16 @@ def _thinking_modes(value: str) -> list[bool]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend-config", required=True, type=Path)
-    parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "maze_navigation_runs")
-    parser.add_argument("--levels-path", type=Path, default=PROJECT_ROOT / "maze_navigation" / "levels.yaml")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=PROJECT_ROOT / "outputs" / "maze_navigation_runs",
+    )
+    parser.add_argument(
+        "--levels-path",
+        type=Path,
+        default=PROJECT_ROOT / "maze_navigation" / "levels.yaml",
+    )
     parser.add_argument("--difficulty", action="append", choices=["easy", "medium", "hard"])
     parser.add_argument("--level-id", action="append")
     parser.add_argument("--thinking", type=_thinking_modes, default=[False, True])

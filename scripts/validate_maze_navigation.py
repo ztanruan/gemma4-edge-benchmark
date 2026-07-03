@@ -14,7 +14,11 @@ from gemma_vllm_benchmark.maze_navigation import load_maze_levels, validate_maze
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--levels-path", type=Path, default=PROJECT_ROOT / "maze_navigation" / "levels.yaml")
+    parser.add_argument(
+        "--levels-path",
+        type=Path,
+        default=PROJECT_ROOT / "maze_navigation" / "levels.yaml",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 

@@ -69,14 +69,22 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "truncated_context_files": ",".join(record.get("truncated_context_files") or []),
         "initial_prompt_token_estimate": record.get("initial_prompt_token_estimate"),
         "initial_prompt_token_debug_ok": (record.get("initial_prompt_token_debug") or {}).get("ok"),
-        "initial_prompt_token_debug_status_code": (record.get("initial_prompt_token_debug") or {}).get("status_code"),
-        "initial_prompt_token_debug_count": (record.get("initial_prompt_token_debug") or {}).get("count"),
-        "initial_prompt_token_debug_error_type": (record.get("initial_prompt_token_debug") or {}).get("error_type"),
+        "initial_prompt_token_debug_status_code": (
+            record.get("initial_prompt_token_debug") or {}
+        ).get("status_code"),
+        "initial_prompt_token_debug_count": (record.get("initial_prompt_token_debug") or {}).get(
+            "count"
+        ),
+        "initial_prompt_token_debug_error_type": (
+            record.get("initial_prompt_token_debug") or {}
+        ).get("error_type"),
         "initial_prompt_token_debug_path": record.get("initial_prompt_token_debug_path"),
         "total_latency_ms": record.get("total_latency_ms"),
         "first_prompt_token_estimate": first_turn.get("prompt_token_estimate"),
         "first_prompt_token_debug_ok": (first_turn.get("prompt_token_debug") or {}).get("ok"),
-        "first_prompt_token_debug_status_code": (first_turn.get("prompt_token_debug") or {}).get("status_code"),
+        "first_prompt_token_debug_status_code": (first_turn.get("prompt_token_debug") or {}).get(
+            "status_code"
+        ),
         "first_prompt_token_debug_count": (first_turn.get("prompt_token_debug") or {}).get("count"),
         "first_prompt_token_debug_path": first_turn.get("prompt_token_debug_path"),
         "first_latency_ms": first_turn.get("latency_ms"),
@@ -86,9 +94,15 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "first_end_to_end_tokens_per_second": first_turn.get("end_to_end_tokens_per_second"),
         "first_finish_reason": first_turn.get("finish_reason"),
         "first_prompt_tokens": _usage_value(first_turn, "prompt_tokens", "prompt_tokens_server"),
-        "first_completion_tokens": _usage_value(first_turn, "completion_tokens", "completion_tokens_server"),
-        "first_completion_tokens_server_reported": (first_turn.get("usage") or {}).get("completion_tokens_server_reported"),
-        "first_completion_tokens_source": (first_turn.get("usage") or {}).get("completion_tokens_source"),
+        "first_completion_tokens": _usage_value(
+            first_turn, "completion_tokens", "completion_tokens_server"
+        ),
+        "first_completion_tokens_server_reported": (first_turn.get("usage") or {}).get(
+            "completion_tokens_server_reported"
+        ),
+        "first_completion_tokens_source": (first_turn.get("usage") or {}).get(
+            "completion_tokens_source"
+        ),
         "first_raw_event_count": first_turn.get("raw_event_count"),
         "first_content_event_count": first_turn.get("content_event_count"),
         "first_reasoning_event_count": first_turn.get("reasoning_event_count"),
@@ -97,9 +111,15 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "first_non_empty_text_event_count": first_turn.get("non_empty_text_event_count"),
         "first_reasoning_chars": len(first_turn.get("raw_reasoning") or ""),
         "first_raw_event_timeline_path": first_turn.get("raw_event_timeline_path"),
-        "first_completion_token_fallback_count": ((first_turn.get("completion_token_fallback_debug") or {}).get("count")),
-        "first_completion_token_fallback_debug_path": first_turn.get("completion_token_fallback_debug_path"),
-        "first_reasoning_only_truncated": ((first_turn.get("reasoning_only_truncated") or {}).get("detected")),
+        "first_completion_token_fallback_count": (
+            (first_turn.get("completion_token_fallback_debug") or {}).get("count")
+        ),
+        "first_completion_token_fallback_debug_path": first_turn.get(
+            "completion_token_fallback_debug_path"
+        ),
+        "first_reasoning_only_truncated": (
+            (first_turn.get("reasoning_only_truncated") or {}).get("detected")
+        ),
         "first_empty_stream_bug": ((first_turn.get("empty_stream_bug") or {}).get("detected")),
         "first_server_decode_tokens_per_second": first_stats.get("server_decode_tokens_per_second"),
         "first_server_ttft_ms": first_stats.get("server_ttft_ms"),
@@ -113,7 +133,9 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "final_latency_ms": final_turn.get("latency_ms"),
         "final_prompt_token_estimate": final_turn.get("prompt_token_estimate"),
         "final_prompt_token_debug_ok": (final_turn.get("prompt_token_debug") or {}).get("ok"),
-        "final_prompt_token_debug_status_code": (final_turn.get("prompt_token_debug") or {}).get("status_code"),
+        "final_prompt_token_debug_status_code": (final_turn.get("prompt_token_debug") or {}).get(
+            "status_code"
+        ),
         "final_prompt_token_debug_count": (final_turn.get("prompt_token_debug") or {}).get("count"),
         "final_prompt_token_debug_path": final_turn.get("prompt_token_debug_path"),
         "final_ttft_ms": final_turn.get("ttft_ms"),
@@ -121,9 +143,15 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "final_ttft_source": final_turn.get("ttft_source"),
         "final_end_to_end_tokens_per_second": final_turn.get("end_to_end_tokens_per_second"),
         "final_prompt_tokens": _usage_value(final_turn, "prompt_tokens", "prompt_tokens_server"),
-        "final_completion_tokens": _usage_value(final_turn, "completion_tokens", "completion_tokens_server"),
-        "final_completion_tokens_server_reported": (final_turn.get("usage") or {}).get("completion_tokens_server_reported"),
-        "final_completion_tokens_source": (final_turn.get("usage") or {}).get("completion_tokens_source"),
+        "final_completion_tokens": _usage_value(
+            final_turn, "completion_tokens", "completion_tokens_server"
+        ),
+        "final_completion_tokens_server_reported": (final_turn.get("usage") or {}).get(
+            "completion_tokens_server_reported"
+        ),
+        "final_completion_tokens_source": (final_turn.get("usage") or {}).get(
+            "completion_tokens_source"
+        ),
         "final_raw_event_count": final_turn.get("raw_event_count"),
         "final_content_event_count": final_turn.get("content_event_count"),
         "final_reasoning_event_count": final_turn.get("reasoning_event_count"),
@@ -132,9 +160,15 @@ def _row_from_record(record: dict[str, Any]) -> dict[str, Any]:
         "final_non_empty_text_event_count": final_turn.get("non_empty_text_event_count"),
         "final_reasoning_chars": len(final_turn.get("raw_reasoning") or ""),
         "final_raw_event_timeline_path": final_turn.get("raw_event_timeline_path"),
-        "final_completion_token_fallback_count": ((final_turn.get("completion_token_fallback_debug") or {}).get("count")),
-        "final_completion_token_fallback_debug_path": final_turn.get("completion_token_fallback_debug_path"),
-        "final_reasoning_only_truncated": ((final_turn.get("reasoning_only_truncated") or {}).get("detected")),
+        "final_completion_token_fallback_count": (
+            (final_turn.get("completion_token_fallback_debug") or {}).get("count")
+        ),
+        "final_completion_token_fallback_debug_path": final_turn.get(
+            "completion_token_fallback_debug_path"
+        ),
+        "final_reasoning_only_truncated": (
+            (final_turn.get("reasoning_only_truncated") or {}).get("detected")
+        ),
         "final_empty_stream_bug": ((final_turn.get("empty_stream_bug") or {}).get("detected")),
         "final_server_decode_tokens_per_second": final_stats.get("server_decode_tokens_per_second"),
         "final_server_ttft_ms": final_stats.get("server_ttft_ms"),
@@ -239,7 +273,9 @@ def _aggregate(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             aggregate[f"{field}_median"] = round(statistics.median(values), 3)
             aggregate[f"{field}_min"] = round(min(values), 3)
             aggregate[f"{field}_max"] = round(max(values), 3)
-            aggregate[f"{field}_stdev"] = round(statistics.stdev(values), 3) if len(values) > 1 else 0.0
+            aggregate[f"{field}_stdev"] = (
+                round(statistics.stdev(values), 3) if len(values) > 1 else 0.0
+            )
         aggregate_rows.append(aggregate)
     return aggregate_rows
 
@@ -263,7 +299,9 @@ def main() -> None:
             rows.append(_row_from_record(record))
 
     if not rows:
-        raise SystemExit("No non-dry-run benchmark records found. Run a live benchmark or pass --include-dry-run.")
+        raise SystemExit(
+            "No non-dry-run benchmark records found. Run a live benchmark or pass --include-dry-run."
+        )
 
     output_path = args.run_dir / "summary.csv"
     with output_path.open("w", encoding="utf-8", newline="") as handle:

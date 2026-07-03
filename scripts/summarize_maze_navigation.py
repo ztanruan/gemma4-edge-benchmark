@@ -95,7 +95,9 @@ def _row_from_step(record: dict[str, Any]) -> dict[str, Any]:
         "dry_run": record.get("dry_run"),
         "parsed_action": record.get("parsed_action"),
         "response_raw_normalized": record.get("response_raw_normalized"),
-        "parsed_json": json.dumps(record.get("parsed_json"), sort_keys=True) if record.get("parsed_json") is not None else None,
+        "parsed_json": json.dumps(record.get("parsed_json"), sort_keys=True)
+        if record.get("parsed_json") is not None
+        else None,
         "format_valid": record.get("format_valid"),
         "action_valid": record.get("action_valid"),
         "transition_valid": record.get("transition_valid"),
@@ -135,11 +137,19 @@ def _row_from_step(record: dict[str, Any]) -> dict[str, Any]:
         "artifact_response_path": ((record.get("artifact_paths") or {}).get("response_path")),
         "artifact_reasoning_path": ((record.get("artifact_paths") or {}).get("reasoning_path")),
         "artifact_messages_path": ((record.get("artifact_paths") or {}).get("messages_path")),
-        "artifact_prompt_token_debug_path": ((record.get("artifact_paths") or {}).get("prompt_token_debug_path")),
-        "artifact_request_payload_path": ((record.get("artifact_paths") or {}).get("request_payload_path")),
+        "artifact_prompt_token_debug_path": (
+            (record.get("artifact_paths") or {}).get("prompt_token_debug_path")
+        ),
+        "artifact_request_payload_path": (
+            (record.get("artifact_paths") or {}).get("request_payload_path")
+        ),
         "artifact_raw_events_path": ((record.get("artifact_paths") or {}).get("raw_events_path")),
-        "artifact_raw_event_timeline_path": ((record.get("artifact_paths") or {}).get("raw_event_timeline_path")),
-        "artifact_metrics_delta_path": ((record.get("artifact_paths") or {}).get("metrics_delta_path")),
+        "artifact_raw_event_timeline_path": (
+            (record.get("artifact_paths") or {}).get("raw_event_timeline_path")
+        ),
+        "artifact_metrics_delta_path": (
+            (record.get("artifact_paths") or {}).get("metrics_delta_path")
+        ),
     }
 
 
@@ -201,7 +211,9 @@ def _aggregate_runs(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "thinking_enabled": thinking_enabled,
             "sample_count": len(bucket),
             "success_count": sum(1 for item in bucket if item.get("success_reached_exit")),
-            "termination_reasons": ",".join(sorted({str(item.get("termination_reason")) for item in bucket})),
+            "termination_reasons": ",".join(
+                sorted({str(item.get("termination_reason")) for item in bucket})
+            ),
             "status_set": ",".join(sorted({str(item.get("status")) for item in bucket})),
         }
         for field in numeric_fields:
